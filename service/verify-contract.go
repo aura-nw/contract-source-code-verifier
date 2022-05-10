@@ -2,6 +2,8 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"smart-contract-verify/model"
@@ -9,6 +11,8 @@ import (
 	"strings"
 
 	"log"
+
+	"github.com/gin-gonic/gin"
 )
 
 func GetContractId(contractAddress string, rpc string) string {
@@ -49,11 +53,10 @@ func GetContractHash(contractAddress string, rpc string) string {
 func VerifyContractCode(contractUrl string, dockerImage string, contractAddress string, isGithubUrl bool, rpc string) bool {
 	hash := GetContractHash(contractAddress, rpc)
 	urlOption := "0"
-	if !isGithubUrl {
+	if isGithubUrl {
 		urlOption = "1"
 	}
 
-	// out, err := exec.Command("cosmwasm-verify", contractUrl, dockerImage, hash).CombinedOutput()
 	out, err := exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, dockerImage, hash, urlOption).CombinedOutput()
 	if err != nil {
 		log.Println("Execute command error: " + string(out))
@@ -64,6 +67,7 @@ func VerifyContractCode(contractUrl string, dockerImage string, contractAddress 
 	return true
 }
 
+// @BasePath /api/v1
 // CallVerifyContractCode godoc
 // @Summary Verify a smart contract source code
 // @Description Compare if source code truely belongs to deployed smart contract
@@ -73,9 +77,7 @@ func VerifyContractCode(contractUrl string, dockerImage string, contractAddress 
 // @Param verify-contract-request body model.VerifyContractRequest true "Verify smart contract source code"
 // @Success 200 {object} model.JsonResponse
 // @Router /smart-contract/verify [post]
-func CallVerifyContractCode(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
+func CallVerifyContractCode(g *gin.Context) {
 	response := model.JsonResponse{}
 
 	// Load config
@@ -84,11 +86,12 @@ func CallVerifyContractCode(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Cannot load config:", err)
 	}
 
+	params, err := ioutil.ReadAll(g.Request.Body)
 	var request model.VerifyContractRequest
-	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(&request)
+	err = json.Unmarshal(params, &request)
 	if err != nil {
-		log.Println("Decode request body error: " + err.Error())
+		fmt.Println("Can't unmarshal the byte array")
+		return
 	}
 
 	verify := VerifyContractCode(request.ContractUrl, request.Image, request.ContractAddress, request.IsGithubUrl, config.RPC)
@@ -117,5 +120,5 @@ func CallVerifyContractCode(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json.NewEncoder(w).Encode(response)
+	g.IndentedJSON(http.StatusOK, response)
 }
