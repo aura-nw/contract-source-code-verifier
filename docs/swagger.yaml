@@ -1,0 +1,58 @@
+basePath: /
+definitions:
+  model.JsonResponse:
+    properties:
+      code:
+        type: string
+      data:
+        type: string
+      message:
+        type: string
+    type: object
+  model.VerifyContractRequest:
+    properties:
+      contractAddress:
+        type: string
+      contractUrl:
+        type: string
+      image:
+        type: string
+      isGithubUrl:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: soberkoder@gmail.com
+    name: API Support
+  description: This is a smart contract verify application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Verify Smart Contract API
+  version: "1.0"
+paths:
+  /smart-contract/verify:
+    post:
+      consumes:
+      - application/json
+      description: Compare if source code truely belongs to deployed smart contract
+      parameters:
+      - description: Verify smart contract source code
+        in: body
+        name: verify-contract-request
+        required: true
+        schema:
+          $ref: '#/definitions/model.VerifyContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.JsonResponse'
+      summary: Verify a smart contract source code
+      tags:
+      - smart-contract
+swagger: "2.0"
