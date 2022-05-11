@@ -107,17 +107,9 @@ func CallVerifyContractCode(g *gin.Context) {
 		// 	log.Println("Error compress schema: " + err.Error())
 		// }
 
-		response = model.JsonResponse{
-			Code:    "Successful",
-			Message: "Smart contract verify successful",
-			Data:    "",
-		}
+		response = util.CustomResponse(model.ResponseCode["SUCCESSFUL"], model.ResponseMessage["SUCCESSFUL"])
 	} else {
-		response = model.JsonResponse{
-			Code:    "Error",
-			Message: "Smart contract verify failed",
-			Data:    "",
-		}
+		response = util.CustomResponse(model.ResponseCode["FAILED"], model.ResponseMessage["FAILED"])
 	}
 
 	g.IndentedJSON(http.StatusOK, response)
