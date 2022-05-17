@@ -24,7 +24,7 @@ func connectDB() *gorm.DB {
 		log.Fatal("Cannot load config:", err)
 	}
 
-	dsn := config.DB_USER + ":" + config.DB_PASS + "@tcp" + "(" + config.DB_HOST + ":" + config.DB_PORT + ")/" + config.DB_NAME + "?" + "parseTime=true&loc=Local"
+	dsn := config.DB_USER + ":" + config.DB_PASS + "@tcp" + "(" + config.DB_HOST + ":" + config.DB_PORT + ")/" + config.DB_NAME + "?" + "parseTime=true&loc=UTC"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 

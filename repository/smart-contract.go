@@ -12,7 +12,6 @@ import (
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
 	"smart-contract-verify/util"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -30,7 +29,7 @@ type SmartContractRepo struct {
 
 func New() *SmartContractRepo {
 	db := database.InitDb()
-	db.AutoMigrate(&model.SmartContract{})
+	// db.AutoMigrate(&model.SmartContract{})
 	return &SmartContractRepo{Db: db}
 }
 
@@ -95,7 +94,6 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 			return
 		} else {
 			contract.Schema = schema
-			contract.UpdatedAt = time.Now()
 			g.BindJSON(&contract)
 			err = model.UpdateSmartContract(repository.Db, &contract)
 			if err != nil {
