@@ -27,16 +27,11 @@ func GetContractId(contractAddress string, rpc string) string {
 	return contract.ContractInfo.CodeId
 }
 
-func GetContractHash(contractAddress string, rpc string) (string, string) {
+func GetContractHash(contractId string, rpc string) (string, string) {
 	// Load config
 	config, err := util.LoadConfig(".")
 	if err != nil {
 		log.Panic("Cannot load config:", err)
-	}
-
-	contractId := GetContractId(contractAddress, rpc)
-	if contractId == "" {
-		return "", ""
 	}
 
 	dir := "tempdir" + fmt.Sprint(rand.Int())
@@ -49,6 +44,7 @@ func GetContractHash(contractAddress string, rpc string) (string, string) {
 
 	out, err = exec.Command("aurad", "query", "wasm", "code", contractId, dir+config.UPLOAD_CONTRACT, "--node", rpc).CombinedOutput()
 	if err != nil {
+		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error download contract: " + err.Error())
 		return "", ""
@@ -57,6 +53,7 @@ func GetContractHash(contractAddress string, rpc string) (string, string) {
 
 	out, err = exec.Command("sha256sum", dir+config.UPLOAD_CONTRACT).CombinedOutput()
 	if err != nil {
+		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error get contract hash: " + err.Error())
 		return "", ""
@@ -67,8 +64,8 @@ func GetContractHash(contractAddress string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, dockerImage string, contractAddress string, isGithubUrl bool, rpc string) (bool, string) {
-	hash, dir := GetContractHash(contractAddress, rpc)
+func VerifyContractCode(contractUrl string, dockerImage string, contractId string, isGithubUrl bool, rpc string) (bool, string) {
+	hash, dir := GetContractHash(contractId, rpc)
 	if hash == "" {
 		return false, dir
 	}
@@ -80,10 +77,19 @@ func VerifyContractCode(contractUrl string, dockerImage string, contractAddress 
 
 	out, err := exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, dockerImage, hash, urlOption, dir).CombinedOutput()
 	if err != nil {
+		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error verify smart contract code: " + err.Error())
 		return false, dir
 	}
 	log.Println("Result VerifyContractCode: " + string(out))
 	return true, dir
+}
+
+func RemoveTempDir(dir string) error {
+	_, err := exec.Command("rm", "-rf", dir).CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
 }

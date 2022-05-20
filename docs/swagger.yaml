@@ -4,8 +4,6 @@ definitions:
     properties:
       code:
         type: string
-      data:
-        type: string
       message:
         type: string
     type: object
@@ -33,6 +31,27 @@ info:
   title: Verify Smart Contract API
   version: "1.0"
 paths:
+  /smart-contract/get-hash/{contractId}:
+    get:
+      consumes:
+      - application/json
+      description: Return the hash of a contract provided its code Id
+      parameters:
+      - description: Get contract hash
+        in: path
+        name: contractId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.JsonResponse'
+      summary: Get the hash of a deployed contract
+      tags:
+      - smart-contract
   /smart-contract/verify:
     post:
       consumes:

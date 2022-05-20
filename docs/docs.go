@@ -24,6 +24,38 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/smart-contract/get-hash/{contractId}": {
+            "get": {
+                "description": "Return the hash of a contract provided its code Id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "smart-contract"
+                ],
+                "summary": "Get the hash of a deployed contract",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Get contract hash",
+                        "name": "contractId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.JsonResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/smart-contract/verify": {
             "post": {
                 "description": "Compare if source code truely belongs to deployed smart contract",
@@ -64,9 +96,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string"
-                },
-                "data": {
                     "type": "string"
                 },
                 "message": {

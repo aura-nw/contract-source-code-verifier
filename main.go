@@ -36,6 +36,7 @@ func main() {
 		eg := v1.Group("/smart-contract")
 		{
 			eg.POST("/verify", smartContractRepo.CallVerifyContractCode)
+			eg.GET("/get-hash/:contractId", smartContractRepo.CallGetContractHash)
 		}
 	}
 

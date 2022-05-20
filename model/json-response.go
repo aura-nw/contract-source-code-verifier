@@ -12,6 +12,8 @@ const (
 	READ_FILE_ERROR                   = "E002"
 	CANT_REMOVE_CODE                  = "E003"
 	CONTRACT_ADDRESS_NOT_FOUND        = "E004"
+	CONTRACT_ID_NOT_FOUND             = "E005"
+	ERROR_GET_HASH                    = "E006"
 )
 
 var ResponseMessage = map[string]string{
@@ -21,4 +23,6 @@ var ResponseMessage = map[string]string{
 	READ_FILE_ERROR:            "Cannot read file in current directory",
 	CANT_REMOVE_CODE:           "Cannot remove downloaded source code",
 	CONTRACT_ADDRESS_NOT_FOUND: "Cannot find the provided contract address",
+	CONTRACT_ID_NOT_FOUND:      "Cannot find the ID of provided contract address",
+	ERROR_GET_HASH:             "Cannot get hash of contract",
 }

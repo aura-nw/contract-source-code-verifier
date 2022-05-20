@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os/exec"
 	"smart-contract-verify/database"
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
@@ -60,11 +59,18 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		return
 	}
 
-	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Image, request.ContractAddress, request.IsGithubUrl, config.RPC)
+	contractId := service.GetContractId(request.ContractAddress, config.RPC)
+	if contractId == "" {
+		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
+		return
+	}
+
+	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Image, contractId, request.IsGithubUrl, config.RPC)
 
 	if verify {
 		files, err := ioutil.ReadDir(dir + config.DIR)
 		if err != nil {
+			_ = service.RemoveTempDir(dir)
 			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
 			return
 		}
@@ -73,6 +79,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		for _, file := range files {
 			data, err := ioutil.ReadFile(dir + config.DIR + file.Name())
 			if err != nil {
+				_ = service.RemoveTempDir(dir)
 				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.READ_FILE_ERROR, model.ResponseMessage[model.READ_FILE_ERROR]))
 				return
 			}
@@ -86,10 +93,12 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
+				_ = service.RemoveTempDir(dir)
 				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CONTRACT_ADDRESS_NOT_FOUND, model.ResponseMessage[model.CONTRACT_ADDRESS_NOT_FOUND]))
 				return
 			}
 
+			_ = service.RemoveTempDir(dir)
 			g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
 			return
 		} else {
@@ -97,6 +106,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 			g.BindJSON(&contract)
 			err = model.UpdateSmartContract(repository.Db, &contract)
 			if err != nil {
+				_ = service.RemoveTempDir(dir)
 				g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
 				return
 			}
@@ -107,7 +117,44 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
 	}
 
-	_, err = exec.Command("rm", "-rf", dir).CombinedOutput()
+	err = service.RemoveTempDir(dir)
+	if err != nil {
+		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
+		return
+	}
+
+	g.IndentedJSON(http.StatusOK, response)
+}
+
+// @BasePath /api/v1
+// CallGetContractHash godoc
+// @Summary Get the hash of a deployed contract
+// @Description Return the hash of a contract provided its code Id
+// @Tags smart-contract
+// @Accept  json
+// @Produce  json
+// @Param contractId path string true "Get contract hash"
+// @Success 200 {object} model.JsonResponse
+// @Router /smart-contract/get-hash/{contractId} [get]
+func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
+	response := model.JsonResponse{}
+
+	// Load config
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Panic("Cannot load config:", err)
+	}
+
+	contractId := g.Param("contractId")
+
+	hash, dir := service.GetContractHash(contractId, config.RPC)
+	if hash == "" {
+		response = util.CustomResponse(model.ERROR_GET_HASH, model.ResponseMessage[model.ERROR_GET_HASH])
+	} else {
+		response = util.CustomResponse(model.SUCCESSFUL, hash)
+	}
+
+	err = service.RemoveTempDir(dir)
 	if err != nil {
 		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
 		return
