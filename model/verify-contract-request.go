@@ -2,7 +2,6 @@ package model
 
 type VerifyContractRequest struct {
 	ContractUrl     string `json:"contractUrl"`
-	Image           string `json:"image"`
+	Commit          string `json:"commit"`
 	ContractAddress string `json:"contractAddress"`
-	IsGithubUrl     bool   `json:"isGithubUrl"`
 }

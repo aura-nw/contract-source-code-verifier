@@ -34,8 +34,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 		log.Panic("Cannot load config:", err)
 	}
 
-	dir := "tempdir" + fmt.Sprint(rand.Int())
-	out, err := exec.Command("mkdir", dir).CombinedOutput()
+	dir, out, err := MakeTempDir()
 	if err != nil {
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error create dir to store code: " + err.Error())
@@ -64,18 +63,22 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, dockerImage string, contractId string, isGithubUrl bool, rpc string) (bool, string) {
-	hash, dir := GetContractHash(contractId, rpc)
-	if hash == "" {
-		return false, dir
+func VerifyContractCode(contractUrl string, commit string, contractHash string, rpc string) (bool, string) {
+	// hash, dir := GetContractHash(contractId, rpc)
+	// if hash == "" {
+	// 	return false, dir
+	// }
+
+	var contractFolder string
+	if strings.Contains(contractUrl, ".git") {
+		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : strings.LastIndex(contractUrl, ".")]
+	} else {
+		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
 	}
 
-	urlOption := "0"
-	if isGithubUrl {
-		urlOption = "1"
-	}
+	dir, out, err := MakeTempDir()
 
-	out, err := exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, dockerImage, hash, urlOption, dir).CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder).CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
@@ -92,4 +95,10 @@ func RemoveTempDir(dir string) error {
 		return err
 	}
 	return nil
+}
+
+func MakeTempDir() (string, []byte, error) {
+	dir := "tempdir" + fmt.Sprint(rand.Int())
+	out, err := exec.Command("mkdir", dir).CombinedOutput()
+	return dir, out, err
 }

@@ -9,14 +9,12 @@ definitions:
     type: object
   model.VerifyContractRequest:
     properties:
+      commit:
+        type: string
       contractAddress:
         type: string
       contractUrl:
         type: string
-      image:
-        type: string
-      isGithubUrl:
-        type: boolean
     type: object
 host: localhost:8080
 info:

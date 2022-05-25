@@ -11,6 +11,7 @@ import (
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
 	"smart-contract-verify/util"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -59,57 +60,52 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		return
 	}
 
-	contractId := service.GetContractId(request.ContractAddress, config.RPC)
-	if contractId == "" {
-		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
+	var contract model.SmartContract
+	err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CONTRACT_ADDRESS_NOT_FOUND, model.ResponseMessage[model.CONTRACT_ADDRESS_NOT_FOUND]))
+			return
+		}
+
+		g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
 		return
 	}
 
-	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Image, contractId, request.IsGithubUrl, config.RPC)
+	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Commit, contract.ContractHash, config.RPC)
 
 	if verify {
-		files, err := ioutil.ReadDir(dir + config.DIR)
-		if err != nil {
-			_ = service.RemoveTempDir(dir)
-			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
-			return
+		var gitUrl string
+		if strings.Contains(request.ContractUrl, ".git") {
+			gitUrl = request.ContractUrl[0 : strings.LastIndex(request.ContractUrl, ".")-1]
+		} else {
+			gitUrl = request.ContractUrl
+		}
+		gitUrl = gitUrl + "/commit/" + request.Commit
+		contract.Url = gitUrl
+
+		var exactContract model.SmartContract
+		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contract.ContractHash)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			contract.ContractVerification = model.EXACT_MATCH
+			var unverifiedContract []model.SmartContract
+			err = model.GetUnverifiedSmartContractByHash(repository.Db, &unverifiedContract, contract.ContractHash)
+			for i := 0; i < len(unverifiedContract); i++ {
+				unverifiedContract[i].ContractMatch = contract.ContractAddress
+				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
+				unverifiedContract[i].Url = gitUrl
+			}
+		} else {
+			contract.ContractVerification = model.SIMILAR_MATCH
+			contract.ContractMatch = exactContract.ContractAddress
 		}
 
-		var schema string
-		for _, file := range files {
-			data, err := ioutil.ReadFile(dir + config.DIR + file.Name())
-			if err != nil {
-				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.READ_FILE_ERROR, model.ResponseMessage[model.READ_FILE_ERROR]))
-				return
-			}
-
-			if file.Name() == InstantiateMsg || file.Name() == QueryMsg || file.Name() == ExecuteMsg {
-				schema += string(data) + ";"
-			}
-		}
-
-		var contract model.SmartContract
-		err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
+		g.BindJSON(&contract)
+		err = model.UpdateSmartContract(repository.Db, &contract)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CONTRACT_ADDRESS_NOT_FOUND, model.ResponseMessage[model.CONTRACT_ADDRESS_NOT_FOUND]))
-				return
-			}
-
 			_ = service.RemoveTempDir(dir)
 			g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
 			return
-		} else {
-			contract.Schema = schema
-			g.BindJSON(&contract)
-			err = model.UpdateSmartContract(repository.Db, &contract)
-			if err != nil {
-				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
-				return
-			}
 		}
 
 		response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])

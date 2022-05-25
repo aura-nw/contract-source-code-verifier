@@ -106,17 +106,14 @@ const docTemplate = `{
         "model.VerifyContractRequest": {
             "type": "object",
             "properties": {
+                "commit": {
+                    "type": "string"
+                },
                 "contractAddress": {
                     "type": "string"
                 },
                 "contractUrl": {
                     "type": "string"
-                },
-                "image": {
-                    "type": "string"
-                },
-                "isGithubUrl": {
-                    "type": "boolean"
                 }
             }
         }

@@ -26,3 +26,9 @@ var ResponseMessage = map[string]string{
 	CONTRACT_ID_NOT_FOUND:      "Cannot find the ID of provided contract address",
 	ERROR_GET_HASH:             "Cannot get hash of contract",
 }
+
+const (
+	EXACT_MATCH   string = "EXACT MATCH"
+	SIMILAR_MATCH        = "SIMILAR MATCH"
+	UNVERIFIED           = "UNVERIFIED"
+)

@@ -1,21 +1,23 @@
 #!/bin/bash
 SOURCE_URL="$1"
-BUILDER_IMAGE="$2"
+COMMIT="$2"
 EXPECTED_CHECKSUM="$3"
-URL_OPTION="$4"
-DIR="$5"
+DIR="$4"
+CONTRACT_FOLDER="$5"
 DOWNLOAD_FILE=download_contract.tar
 DOWNLOAD_DIR=$DIR/download_contract.tar
 
-if [ "$URL_OPTION" == "0" ]; then
-    wget --no-verbose -O "$DOWNLOAD_DIR" "$SOURCE_URL"
-    SOURCE_CHECKSUM=$(sha256sum "$DOWNLOAD_DIR")
-    cd $DIR
-    tar -x --strip-components 1 -f "$DOWNLOAD_FILE"
-else 
+# if [ "$URL_OPTION" == "0" ]; then
+#     wget --no-verbose -O "$DOWNLOAD_DIR" "$SOURCE_URL"
+#     SOURCE_CHECKSUM=$(sha256sum "$DOWNLOAD_DIR")
+#     cd $DIR
+#     tar -x --strip-components 1 -f "$DOWNLOAD_FILE"
+# else 
     cd $DIR
     git clone $SOURCE_URL
-fi
+    cd $CONTRACT_FOLDER
+    git checkout $COMMIT
+# fi
 
 RUSTFLAGS='-C link-arg=-s' cargo wasm
 CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
@@ -28,7 +30,7 @@ CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{
 # DOCKER_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
-    cargo schema
+    # cargo schema
     exit 0
 # else if [ "$DOCKER_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
 #     exit 0
