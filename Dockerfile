@@ -2,8 +2,8 @@ FROM ubuntu:latest
 
 RUN apt-get update
 RUN apt-get install -y wget git gcc
-RUN sudo apt update && sudo apt upgrade
-RUN sudo apt install curl
+RUN apt update && apt upgrade
+RUN apt install curl
 
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
