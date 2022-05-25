@@ -22,7 +22,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -y | sh
 RUN rustup target list --installed
 RUN rustup target add wasm32-unknown-unknown
 
