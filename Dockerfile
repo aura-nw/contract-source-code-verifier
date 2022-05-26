@@ -22,13 +22,13 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN [ "/bin/bash", "-c", "curl https://sh.rustup.rs -sSf | -s -- -y" ]
-RUN rustup target list --installed
-RUN rustup target add wasm32-unknown-unknown
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN rustup target list --installed | bash
+RUN rustup target add wasm32-unknown-unknown | bash
 
 RUN go mod download
 
-RUN swag init
+RUN swag init | bash
 
 RUN go build
 
