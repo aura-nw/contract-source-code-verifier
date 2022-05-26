@@ -3,7 +3,7 @@ FROM ubuntu:latest
 RUN apt-get update
 RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
-RUN apt install curl -y
+RUN apt install curl make -y
 
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
