@@ -22,6 +22,12 @@ WORKDIR /usr/src/app
 
 COPY . .
 
+RUN git clone https://github.com/aura-nw/aura.git
+WORKDIR /usr/src/app/aura
+RUN make
+
+WORKDIR /usr/src/app
+
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 RUN rustup target list --installed | bash
 RUN rustup target add wasm32-unknown-unknown | bash
