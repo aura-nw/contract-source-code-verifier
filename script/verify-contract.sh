@@ -4,8 +4,8 @@ COMMIT="$2"
 EXPECTED_CHECKSUM="$3"
 DIR="$4"
 CONTRACT_FOLDER="$5"
-DOWNLOAD_FILE=download_contract.tar
-DOWNLOAD_DIR=$DIR/download_contract.tar
+# DOWNLOAD_FILE=download_contract.tar
+# DOWNLOAD_DIR=$DIR/download_contract.tar
 
 # if [ "$URL_OPTION" == "0" ]; then
 #     wget --no-verbose -O "$DOWNLOAD_DIR" "$SOURCE_URL"

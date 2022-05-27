@@ -52,3 +52,9 @@ func UpdateSmartContract(db *gorm.DB, SmartContract *SmartContract) (err error) 
 	db.Save(SmartContract)
 	return nil
 }
+
+// Update smart contract
+func UpdateMultipleSmartContract(db *gorm.DB, SmartContract *[]SmartContract) (err error) {
+	db.Save(SmartContract)
+	return nil
+}

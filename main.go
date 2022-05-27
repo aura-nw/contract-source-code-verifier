@@ -20,14 +20,6 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
-	// contractUrl := "https://drive.google.com/u/0/uc?id=1lZ-npBwTt4AEMLImrzw0k4X997yiTosW&export=download"
-	// dockerImage := "cosmwasm/rust-optimizer:0.10.7"
-	// contractAddress := "aura1r9jswv0rfywh809d8rpfcw0lqlfs6tw079tn5v0p4z0mt4zea6ksguvh69"
-	// rpc := "http://34.199.79.132:26657"
-
-	// verify := VerifyContractCode(contractUrl, dockerImage, contractAddress, rpc)
-	// log.Println("Smart contract verified: " + strconv.FormatBool(verify))
-
 	smartContractRepo := repository.New()
 	router := gin.Default()
 	docs.SwaggerInfo.BasePath = "/api/v1"
@@ -37,6 +29,7 @@ func main() {
 		{
 			eg.POST("/verify", smartContractRepo.CallVerifyContractCode)
 			eg.GET("/get-hash/:contractId", smartContractRepo.CallGetContractHash)
+			eg.GET("get-unverified-contract/:contractHash", smartContractRepo.TestQueryGetAll)
 		}
 	}
 

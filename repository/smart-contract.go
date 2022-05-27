@@ -88,13 +88,6 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contract.ContractHash)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			contract.ContractVerification = model.EXACT_MATCH
-			var unverifiedContract []model.SmartContract
-			err = model.GetUnverifiedSmartContractByHash(repository.Db, &unverifiedContract, contract.ContractHash)
-			for i := 0; i < len(unverifiedContract); i++ {
-				unverifiedContract[i].ContractMatch = contract.ContractAddress
-				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
-				unverifiedContract[i].Url = gitUrl
-			}
 		} else {
 			contract.ContractVerification = model.SIMILAR_MATCH
 			contract.ContractMatch = exactContract.ContractAddress
@@ -106,6 +99,24 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 			_ = service.RemoveTempDir(dir)
 			g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
 			return
+		}
+
+		if contract.ContractVerification == model.EXACT_MATCH {
+			var unverifiedContract []model.SmartContract
+			err = model.GetUnverifiedSmartContractByHash(repository.Db, &unverifiedContract, contract.ContractHash)
+			for i := 0; i < len(unverifiedContract); i++ {
+				unverifiedContract[i].ContractMatch = contract.ContractAddress
+				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
+				unverifiedContract[i].Url = gitUrl
+			}
+
+			g.BindJSON(&unverifiedContract)
+			err = model.UpdateMultipleSmartContract(repository.Db, &unverifiedContract)
+			if err != nil {
+				_ = service.RemoveTempDir(dir)
+				g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+				return
+			}
 		}
 
 		response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
@@ -154,6 +165,34 @@ func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
 	if err != nil {
 		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
 		return
+	}
+
+	g.IndentedJSON(http.StatusOK, response)
+}
+
+// @BasePath /api/v1
+// TestQueryGetAll godoc
+// @Summary Test get unverified contract
+// @Description Return all unverified contract with provided hash
+// @Tags smart-contract
+// @Accept  json
+// @Produce  json
+// @Param contractHash path string true "Get list unverified contract"
+// @Success 200 {object} model.JsonResponse
+// @Router /smart-contract/get-unverified-contract/{contractHash} [get]
+func (repository *SmartContractRepo) TestQueryGetAll(g *gin.Context) {
+	response := model.JsonResponse{}
+
+	contractHash := g.Param("contractHash")
+
+	var unverifiedContract []model.SmartContract
+	err := model.GetUnverifiedSmartContractByHash(repository.Db, &unverifiedContract, contractHash)
+	if err != nil {
+		response = util.CustomResponse(model.FAILED, err.Error())
+	} else {
+		log.Println(len(unverifiedContract))
+		res, _ := json.Marshal(unverifiedContract)
+		response = util.CustomResponse(model.SUCCESSFUL, string(res))
 	}
 
 	g.IndentedJSON(http.StatusOK, response)
