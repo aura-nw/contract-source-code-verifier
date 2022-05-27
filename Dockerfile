@@ -1,7 +1,5 @@
 FROM ubuntu:latest
 
-RUN bash
-
 RUN apt-get update
 RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
@@ -29,6 +27,8 @@ WORKDIR /usr/src/app/aura
 RUN make
 
 WORKDIR /usr/src/app
+
+RUN chsh -s /bin/bash
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 RUN rustup target list --installed
