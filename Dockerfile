@@ -29,12 +29,12 @@ RUN make
 WORKDIR /usr/src/app
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-RUN rustup target list --installed | bash
-RUN rustup target add wasm32-unknown-unknown | bash
+RUN rustup target list --installed | bash -s -- -y
+RUN rustup target add wasm32-unknown-unknown | bash -s -- -y
 
 RUN go mod download
 
-RUN swag init | bash
+RUN swag init | bash -s -- -y
 
 RUN go build
 
