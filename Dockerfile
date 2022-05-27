@@ -1,5 +1,7 @@
 FROM ubuntu:latest
 
+RUN bash
+
 RUN apt-get update
 RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
