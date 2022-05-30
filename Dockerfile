@@ -20,11 +20,7 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-
-FROM install-stage
-
-SHELL ["/bin/bash", "-c"]
-
+ENV PATH="/root/.cargo/bin:${PATH}"
 RUN rustup target list --installed | bash
 RUN rustup target add wasm32-unknown-unknown | bash
 
