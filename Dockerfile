@@ -3,7 +3,7 @@ FROM ubuntu:latest
 RUN apt-get update
 RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
-RUN apt install curl make -y
+RUN apt install curl make bash -y
 
 ENV SHELL /bin/bash
 
@@ -42,4 +42,4 @@ RUN go build
 
 EXPOSE $PORT
 
-CMD [ "/bin/bash", "go", "run", "main.go" ]
+CMD [ "go", "run", "main.go" ]
