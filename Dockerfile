@@ -5,7 +5,8 @@ RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
 
-ENV SHELL /bin/bash
+# ENV SHELL /bin/bash
+ENTRYPOINT ["/bin/bash"]
 
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
@@ -29,8 +30,6 @@ WORKDIR /usr/src/app/aura
 RUN make
 
 WORKDIR /usr/src/app
-
-RUN su -c bash
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 RUN rustup target list --installed | bash
