@@ -42,4 +42,4 @@ RUN go build
 
 EXPOSE $PORT
 
-CMD [ "go", "run", "main.go" ]
+CMD [ "/bin/bash", "go", "run", "main.go" ]
