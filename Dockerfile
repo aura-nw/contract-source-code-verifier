@@ -19,6 +19,11 @@ ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN source /root/.cargo/env
+RUN rustup target list --installed | bash
+RUN rustup target add wasm32-unknown-unknown | bash
+
 ARG PORT=8080
 
 RUN mkdir -p /usr/src/app
@@ -32,11 +37,6 @@ WORKDIR /usr/src/app/aura
 RUN make
 
 WORKDIR /usr/src/app
-
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-RUN source /root/.cargo/env
-RUN rustup target list --installed | bash
-RUN rustup target add wasm32-unknown-unknown | bash
 
 RUN go mod download
 
