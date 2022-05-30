@@ -28,7 +28,7 @@ RUN make
 
 WORKDIR /usr/src/app
 
-# RUN ["/bin/bash"]
+RUN su -c bash
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 RUN rustup target list --installed | bash
