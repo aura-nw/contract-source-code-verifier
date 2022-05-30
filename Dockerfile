@@ -5,6 +5,8 @@ RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
 RUN apt install curl make -y
 
+ENV SHELL /bin/bash
+
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
 RUN tar -C /usr/local -xzf /tmp/go1.17.5.linux-amd64.tar.gz
