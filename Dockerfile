@@ -1,4 +1,4 @@
-FROM ubuntu:latest as install-stage
+FROM ubuntu:20.04
 
 SHELL ["/bin/bash", "-c"]
 
@@ -6,9 +6,6 @@ RUN apt-get update
 RUN apt-get install -y wget git gcc
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
-
-# ENV SHELL /bin/bash
-# ENTRYPOINT ["/bin/bash"]
 
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
@@ -20,6 +17,7 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+
 ENV PATH /root/.cargo/bin:$PATH
 RUN rustup target list --installed
 RUN rustup target add wasm32-unknown-unknown
