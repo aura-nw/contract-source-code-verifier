@@ -83,6 +83,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		}
 		gitUrl = gitUrl + "/commit/" + request.Commit
 		contract.Url = gitUrl
+		contract.CompilerVersion = request.CompilerVersion
 
 		var exactContract model.SmartContract
 		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contract.ContractHash)
@@ -108,6 +109,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 				unverifiedContract[i].ContractMatch = contract.ContractAddress
 				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
 				unverifiedContract[i].Url = gitUrl
+				unverifiedContract[i].CompilerVersion = request.CompilerVersion
 			}
 
 			g.BindJSON(&unverifiedContract)

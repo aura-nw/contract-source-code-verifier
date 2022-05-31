@@ -141,6 +141,9 @@ const docTemplate = `{
                 "commit": {
                     "type": "string"
                 },
+                "compilerVersion": {
+                    "type": "string"
+                },
                 "contractAddress": {
                     "type": "string"
                 },

@@ -12,12 +12,14 @@ type SmartContract struct {
 	UpdatedAt            time.Time
 	Height               int
 	CodeId               int
+	ContractName         string
 	ContractAddress      string
 	CreatorAddress       string
 	ContractHash         string
 	Url                  string
 	ContractMatch        string
 	ContractVerification string
+	CompilerVersion      string
 }
 
 // Find a smart contract
