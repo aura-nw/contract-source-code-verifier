@@ -18,7 +18,7 @@ definitions:
       contractUrl:
         type: string
     type: object
-host: localhost:8080
+host: verify-job.dev.aura.network
 info:
   contact:
     email: soberkoder@gmail.com
