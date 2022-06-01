@@ -33,7 +33,7 @@ func main() {
 		}
 	}
 
-	url := ginSwagger.URL("https://0.0.0.0:8080/swagger/doc.json") // The url pointing to API definition
+	url := ginSwagger.URL("https://verify-job.dev.aura.network/swagger/doc.json") // The url pointing to API definition
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler, url))
-	router.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	router.Run("verify-job.dev.aura.network") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
