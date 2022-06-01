@@ -11,4 +11,6 @@ type Config struct {
 
 	DIR             string `mapstructure:"DIR"`
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
+
+	SERVER string `mapstructure:"SERVER"`
 }
