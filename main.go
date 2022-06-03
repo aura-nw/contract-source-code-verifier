@@ -24,8 +24,11 @@ func main() {
 	smartContractRepo := repository.New()
 	router := gin.Default()
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders: []string{"Content-Type,access-control-allow-origin, access-control-allow-headers"},
+	}))
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	v1 := router.Group("/api/v1")
@@ -40,6 +43,5 @@ func main() {
 
 	url := ginSwagger.URL("https://verify-job.dev.aura.network/swagger/doc.json") // The url pointing to API definition
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler, url))
-	router.Use(cors.New(corsConfig))
 	router.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
