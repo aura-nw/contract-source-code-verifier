@@ -30,7 +30,7 @@ CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{
 # DOCKER_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
-    # cargo schema
+    cargo schema
     exit 0
 # else if [ "$DOCKER_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
 #     exit 0

@@ -75,6 +75,32 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Commit, contract.ContractHash, config.RPC)
 
 	if verify {
+		files, err := ioutil.ReadDir(dir + config.DIR)
+		if err != nil {
+			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
+			return
+		}
+
+		var instantiateSchema string
+		var querySchema string
+		var executeSchema string
+		for _, file := range files {
+			data, err := ioutil.ReadFile(dir + config.DIR + file.Name())
+			if err != nil {
+				_ = service.RemoveTempDir(dir)
+				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.READ_FILE_ERROR, model.ResponseMessage[model.READ_FILE_ERROR]))
+				return
+			}
+
+			if file.Name() == InstantiateMsg {
+				instantiateSchema = string(data)
+			} else if file.Name() == QueryMsg {
+				querySchema = string(data)
+			} else if file.Name() == ExecuteMsg {
+				executeSchema = string(data)
+			}
+		}
+
 		var gitUrl string
 		if strings.Contains(request.ContractUrl, ".git") {
 			gitUrl = request.ContractUrl[0 : strings.LastIndex(request.ContractUrl, ".")-1]
@@ -84,6 +110,9 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		gitUrl = gitUrl + "/commit/" + request.Commit
 		contract.Url = gitUrl
 		contract.CompilerVersion = request.CompilerVersion
+		contract.InstantiateMsgSchema = instantiateSchema
+		contract.QueryMsgSchema = querySchema
+		contract.ExecuteMsgSchema = executeSchema
 
 		var exactContract model.SmartContract
 		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contract.ContractHash)
@@ -110,6 +139,9 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
 				unverifiedContract[i].Url = gitUrl
 				unverifiedContract[i].CompilerVersion = request.CompilerVersion
+				unverifiedContract[i].InstantiateMsgSchema = contract.InstantiateMsgSchema
+				unverifiedContract[i].QueryMsgSchema = contract.QueryMsgSchema
+				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
 			}
 
 			g.BindJSON(&unverifiedContract)
