@@ -72,7 +72,20 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		return
 	}
 
-	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Commit, contract.ContractHash, config.RPC)
+	var contractHash string
+	if contract.ContractHash != "" {
+		contractHash = contract.ContractHash
+	} else {
+		contractId := service.GetContractId(contract.ContractAddress, config.RPC)
+
+		hash, dir := service.GetContractHash(contractId, config.RPC)
+		if hash == "" {
+			response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
+		}
+		_ = service.RemoveTempDir(dir)
+	}
+
+	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, config.RPC)
 
 	if verify {
 		files, err := ioutil.ReadDir(dir + config.DIR)
