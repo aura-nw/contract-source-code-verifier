@@ -3,9 +3,16 @@ FROM ubuntu:latest
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update
-RUN apt-get install -y wget git gcc
+RUN apt-get remove docker docker-engine docker.io containerd runc
+RUN apt-get install -y wget git gcc ca-certificates gnupg lsb-release curl
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
+
+RUN echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+RUN apt-get update
+RUN apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
