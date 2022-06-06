@@ -13,7 +13,7 @@ RUN echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 RUN apt-get update
-RUN apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+RUN apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
 
 RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
 
