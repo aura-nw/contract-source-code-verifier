@@ -21,6 +21,7 @@ const (
 	InstantiateMsg string = "instantiate_msg.json"
 	QueryMsg              = "query_msg.json"
 	ExecuteMsg            = "execute_msg.json"
+	CW20ExecuteMsg        = "cw20_execute_msg.json"
 )
 
 type SmartContractRepo struct {
@@ -75,15 +76,16 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	var contractHash string
 	if contract.ContractHash != "" {
 		contractHash = contract.ContractHash
-	} else {
-		contractId := service.GetContractId(contract.ContractAddress, config.RPC)
-
-		hash, dir := service.GetContractHash(contractId, config.RPC)
-		if hash == "" {
-			response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
-		}
-		_ = service.RemoveTempDir(dir)
 	}
+	// else {
+	// 	contractId := service.GetContractId(contract.ContractAddress, config.RPC)
+
+	// 	hash, dir := service.GetContractHash(contractId, config.RPC)
+	// 	if hash == "" {
+	// 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
+	// 	}
+	// 	_ = service.RemoveTempDir(dir)
+	// }
 
 	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, config.RPC)
 
@@ -109,7 +111,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 				instantiateSchema = string(data)
 			} else if file.Name() == QueryMsg {
 				querySchema = string(data)
-			} else if file.Name() == ExecuteMsg {
+			} else if file.Name() == ExecuteMsg || file.Name() == CW20ExecuteMsg {
 				executeSchema = string(data)
 			}
 		}
