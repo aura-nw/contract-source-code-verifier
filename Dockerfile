@@ -3,7 +3,6 @@ FROM ubuntu:latest
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update
-RUN apt-get remove docker docker-engine docker.io containerd runc
 RUN apt-get install -y wget git gcc ca-certificates gnupg lsb-release curl
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
