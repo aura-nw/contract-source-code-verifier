@@ -19,15 +19,15 @@ CONTRACT_FOLDER="$5"
     git checkout $COMMIT
 # fi
 
-RUSTFLAGS='-C link-arg=-s' cargo wasm
-CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
+# RUSTFLAGS='-C link-arg=-s' cargo wasm
+# CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
 
-# docker run --rm \
-#     -v "$(pwd):/code" \
-#     --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-#     --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-#     "$BUILDER_IMAGE"
-# DOCKER_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
+docker run --rm \
+    -v "$(pwd):/code" \
+    --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+    --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+    cosmwasm/rust-optimizer:0.12.4
+CARGO_CHECKSUM=$(sha256sum artifact/*.wasm | awk '{print $1}')
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
     cargo schema
