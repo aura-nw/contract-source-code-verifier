@@ -3,11 +3,11 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os/exec"
 	"smart-contract-verify/model"
 	"smart-contract-verify/util"
 	"strings"
+	"time"
 
 	"log"
 )
@@ -63,7 +63,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, rpc string) (bool, string) {
+func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerImage, rpc string) (bool, string, string) {
 	// hash, dir := GetContractHash(contractId, rpc)
 	// if hash == "" {
 	// 	return false, dir
@@ -78,15 +78,15 @@ func VerifyContractCode(contractUrl string, commit string, contractHash string, 
 
 	dir, out, err := MakeTempDir()
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder).CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerImage).CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error verify smart contract code: " + err.Error())
-		return false, dir
+		return false, dir, contractFolder
 	}
 	log.Println("Result VerifyContractCode: " + string(out))
-	return true, dir
+	return true, dir, contractFolder
 }
 
 func RemoveTempDir(dir string) error {
@@ -98,7 +98,7 @@ func RemoveTempDir(dir string) error {
 }
 
 func MakeTempDir() (string, []byte, error) {
-	dir := "tempdir" + fmt.Sprint(rand.Int())
+	dir := "tempdir" + fmt.Sprint(time.Now().Unix())
 	out, err := exec.Command("mkdir", dir).CombinedOutput()
 	return dir, out, err
 }

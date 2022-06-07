@@ -5,4 +5,5 @@ type VerifyContractRequest struct {
 	Commit          string `json:"commit"`
 	ContractAddress string `json:"contractAddress"`
 	CompilerVersion string `json:"compilerVersion"`
+	CompilerImage   string `json:"compilerImage"`
 }

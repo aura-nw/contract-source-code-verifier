@@ -87,10 +87,10 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	// 	_ = service.RemoveTempDir(dir)
 	// }
 
-	verify, dir := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, config.RPC)
+	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerImage, config.RPC)
 
 	if verify {
-		files, err := ioutil.ReadDir(dir + config.DIR)
+		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.DIR)
 		if err != nil {
 			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
 			return
@@ -100,7 +100,8 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		var querySchema string
 		var executeSchema string
 		for _, file := range files {
-			data, err := ioutil.ReadFile(dir + config.DIR + file.Name())
+			log.Println(dir + "/" + contractFolder + config.DIR + file.Name())
+			data, err := ioutil.ReadFile(dir + "/" + contractFolder + config.DIR + file.Name())
 			if err != nil {
 				_ = service.RemoveTempDir(dir)
 				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.READ_FILE_ERROR, model.ResponseMessage[model.READ_FILE_ERROR]))

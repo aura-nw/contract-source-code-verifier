@@ -11,6 +11,8 @@ definitions:
     properties:
       commit:
         type: string
+      compilerImage:
+        type: string
       compilerVersion:
         type: string
       contractAddress:
