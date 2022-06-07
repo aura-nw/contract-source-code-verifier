@@ -63,7 +63,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerImage, rpc string) (bool, string, string) {
+func VerifyContractCode(contractUrl string, commit string, contractHash string, rpc string) (bool, string, string) {
 	// hash, dir := GetContractHash(contractId, rpc)
 	// if hash == "" {
 	// 	return false, dir
@@ -78,7 +78,7 @@ func VerifyContractCode(contractUrl string, commit string, contractHash string, 
 
 	dir, out, err := MakeTempDir()
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerImage).CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, "").CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))

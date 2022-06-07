@@ -141,9 +141,6 @@ const docTemplate = `{
                 "commit": {
                     "type": "string"
                 },
-                "compilerImage": {
-                    "type": "string"
-                },
                 "compilerVersion": {
                     "type": "string"
                 },

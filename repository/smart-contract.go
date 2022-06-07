@@ -87,7 +87,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	// 	_ = service.RemoveTempDir(dir)
 	// }
 
-	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerImage, config.RPC)
+	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, config.RPC)
 
 	if verify {
 		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.DIR)
