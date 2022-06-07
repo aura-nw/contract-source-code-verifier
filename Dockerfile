@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update
-RUN apt-get install -y wget git gcc ca-certificates gnupg lsb-release curl
+RUN apt-get install wget git gcc ca-certificates gnupg lsb-release curl -y
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
 
