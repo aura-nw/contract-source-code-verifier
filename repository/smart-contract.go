@@ -174,13 +174,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 
 		response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 	} else {
-		var contractFolder string
-		if strings.Contains(request.ContractUrl, ".git") {
-			contractFolder = request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : strings.LastIndex(request.ContractUrl, ".")]
-		} else {
-			contractFolder = request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : len([]rune(request.ContractUrl))]
-		}
-		out, _ := exec.Command("sha256sum", dir+"/"+contractFolder+"/target/wasm32-unknown-unknown/release/*.wasm").CombinedOutput()
+		out, _ := exec.Command("sha256sum", "target/wasm32-unknown-unknown/release/*.wasm").CombinedOutput()
 		fmt.Println("Verify source code failed: " + string(out))
 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
 	}
