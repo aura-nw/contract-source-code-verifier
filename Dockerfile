@@ -2,6 +2,8 @@ FROM ubuntu:latest
 
 SHELL ["/bin/bash", "-c"]
 
+WORKDIR /root
+
 RUN apt-get update
 RUN apt-get install wget git gcc ca-certificates gnupg lsb-release curl -y
 RUN apt update && apt upgrade -y
@@ -39,10 +41,10 @@ ARG PORT=8080
 COPY . .
 
 RUN git clone https://github.com/aura-nw/aura.git
-RUN cd aura
+WORKDIR /root/aura
 RUN make
 
-RUN cd ..
+WORKDIR /root
 
 RUN go mod download
 
