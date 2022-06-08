@@ -64,21 +64,12 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 }
 
 func VerifyContractCode(contractUrl string, commit string, contractHash string, rpc string) (bool, string, string) {
-	// hash, dir := GetContractHash(contractId, rpc)
-	// if hash == "" {
-	// 	return false, dir
-	// }
-
-	var contractFolder string
-	if strings.Contains(contractUrl, ".git") {
-		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : strings.LastIndex(contractUrl, ".")]
-	} else {
-		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
-	}
+	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
 
 	dir, out, err := MakeTempDir()
+	log.Println("Create dir successful: ", dir)
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, "").CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder).CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))

@@ -180,7 +180,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		} else {
 			contractFolder = request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : len([]rune(request.ContractUrl))]
 		}
-		out, _ := exec.Command("sha256sum", dir+contractFolder+"/*.wasm").CombinedOutput()
+		out, _ := exec.Command("sha256sum", dir+"/"+contractFolder+"/target/wasm32-unknown-unknown/release/*.wasm").CombinedOutput()
 		fmt.Println("Verify source code failed: " + string(out))
 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
 	}

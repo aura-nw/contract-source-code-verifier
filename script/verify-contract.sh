@@ -4,21 +4,11 @@ COMMIT="$2"
 EXPECTED_CHECKSUM="$3"
 DIR="$4"
 CONTRACT_FOLDER="$5"
-# COMPILER_IMAGE="$6"
-# DOWNLOAD_FILE=download_contract.tar
-# DOWNLOAD_DIR=$DIR/download_contract.tar
 
-# if [ "$URL_OPTION" == "0" ]; then
-#     wget --no-verbose -O "$DOWNLOAD_DIR" "$SOURCE_URL"
-#     SOURCE_CHECKSUM=$(sha256sum "$DOWNLOAD_DIR")
-#     cd $DIR
-#     tar -x --strip-components 1 -f "$DOWNLOAD_FILE"
-# else 
-    cd $DIR
-    git clone $SOURCE_URL
-    cd $CONTRACT_FOLDER
-    git checkout $COMMIT
-# fi
+cd $DIR
+git clone $SOURCE_URL
+cd $CONTRACT_FOLDER
+git checkout $COMMIT
 
 # if [ "$COMPILER_IMAGE" == "" ]; then
     RUSTFLAGS='-C link-arg=-s' cargo wasm
