@@ -2,10 +2,10 @@ FROM ubuntu:20.04
 
 SHELL ["/bin/bash", "-c"]
 
-WORKDIR /root
+# WORKDIR /root
 
 RUN apt-get update
-RUN apt-get install wget git gcc ca-certificates gnupg lsb-release curl -y
+RUN apt-get install wget git gcc -y
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
 
@@ -34,17 +34,17 @@ RUN rustup target add wasm32-unknown-unknown
 
 ARG PORT=8080
 
-# RUN mkdir -p /usr/src/app
+RUN mkdir -p /usr/src/app
 
-# WORKDIR /usr/src/app
+WORKDIR /usr/src/app
 
 COPY . .
 
 RUN git clone https://github.com/aura-nw/aura.git
-WORKDIR /root/aura
+WORKDIR /usr/src/app/aura
 RUN make
 
-WORKDIR /root
+WORKDIR /usr/src/app
 
 RUN go mod download
 
