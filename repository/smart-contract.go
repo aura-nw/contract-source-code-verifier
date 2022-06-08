@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
 	"smart-contract-verify/database"
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
@@ -87,9 +88,11 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	// 	_ = service.RemoveTempDir(dir)
 	// }
 
+	fmt.Println("Start verifying smart contract source code")
 	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, config.RPC)
 
 	if verify {
+		fmt.Println("Verify smart contract successful")
 		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.DIR)
 		if err != nil {
 			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
@@ -171,6 +174,14 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 
 		response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 	} else {
+		var contractFolder string
+		if strings.Contains(request.ContractUrl, ".git") {
+			contractFolder = request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : strings.LastIndex(request.ContractUrl, ".")]
+		} else {
+			contractFolder = request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : len([]rune(request.ContractUrl))]
+		}
+		out, _ := exec.Command("sha256sum", dir+contractFolder+"/*.wasm").CombinedOutput()
+		fmt.Println("Verify source code failed: " + string(out))
 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
 	}
 
