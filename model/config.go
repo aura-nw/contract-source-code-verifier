@@ -13,4 +13,8 @@ type Config struct {
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
 
 	SERVER string `mapstructure:"SERVER"`
+
+	REDIS_HOST    string `mapstructure:"REDIS_HOST"`
+	REDIS_PORT    string `mapstructure:"REDIS_PORT"`
+	REDIS_CHANNEL string `mapstructure:"REDIS_CHANNEL"`
 }

@@ -23,12 +23,6 @@ func main() {
 	smartContractRepo := repository.New()
 	router := gin.Default()
 
-	// router.Use(cors.New(cors.Config{
-	// 	AllowOrigins: []string{"*"},
-	// 	AllowMethods: []string{"POST", "PUT", "PATCH", "DELETE"},
-	// 	AllowHeaders: []string{"Content-Type,Access-Control-Allow-Origin, Access-Control-Allow-Headers"},
-	// }))
-
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	v1 := router.Group("/api/v1")
 	{
@@ -36,7 +30,6 @@ func main() {
 		{
 			eg.POST("/verify", smartContractRepo.CallVerifyContractCode)
 			eg.GET("/get-hash/:contractId", smartContractRepo.CallGetContractHash)
-			eg.GET("get-unverified-contract/:contractHash", smartContractRepo.TestQueryGetAll)
 		}
 	}
 
