@@ -13,6 +13,7 @@ git checkout $COMMIT
 # if [ "$COMPILER_IMAGE" == "" ]; then
     RUSTFLAGS='-C link-arg=-s' cargo wasm
     CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
+    echo $CARGO_CHECKSUM
 # else
 #     docker run --rm \
 #         -v "$(pwd):/code" \

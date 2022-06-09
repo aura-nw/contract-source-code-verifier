@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os/exec"
 	"smart-contract-verify/database"
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
@@ -174,8 +173,6 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 
 		response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 	} else {
-		out, _ := exec.Command("sha256sum", "target/wasm32-unknown-unknown/release/*.wasm").CombinedOutput()
-		fmt.Println("Verify source code failed: " + string(out))
 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
 	}
 
