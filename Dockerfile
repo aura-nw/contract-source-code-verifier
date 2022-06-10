@@ -3,7 +3,7 @@ FROM ubuntu:latest
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update
-RUN apt-get install wget git gcc -y
+RUN apt-get install wget git gcc ca-certificates gnupg lsb-release -y
 RUN apt update && apt upgrade -y
 RUN apt install curl make bash -y
 
