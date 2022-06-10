@@ -69,7 +69,7 @@ func VerifyContractCode(contractUrl string, commit string, contractHash string, 
 	dir, out, err := MakeTempDir()
 	log.Println("Create dir successful: ", dir)
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder).CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, "temp/"+dir, contractFolder).CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
@@ -81,7 +81,7 @@ func VerifyContractCode(contractUrl string, commit string, contractHash string, 
 }
 
 func RemoveTempDir(dir string) error {
-	_, err := exec.Command("rm", "-rf", dir).CombinedOutput()
+	_, err := exec.Command("rm", "-rf", "temp/"+dir).CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -90,6 +90,6 @@ func RemoveTempDir(dir string) error {
 
 func MakeTempDir() (string, []byte, error) {
 	dir := "tempdir" + fmt.Sprint(time.Now().Unix())
-	out, err := exec.Command("mkdir", dir).CombinedOutput()
+	out, err := exec.Command("mkdir", "temp/"+dir).CombinedOutput()
 	return dir, out, err
 }
