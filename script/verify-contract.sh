@@ -11,16 +11,17 @@ cd $CONTRACT_FOLDER
 git checkout $COMMIT
 
 # if [ "$COMPILER_IMAGE" == "" ]; then
-    RUSTFLAGS='-C link-arg=-s' cargo wasm
-    CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
-    echo $CARGO_CHECKSUM
+    # RUSTFLAGS='-C link-arg=-s' cargo wasm
+    # CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
+    # echo $CARGO_CHECKSUM
 # else
-#     docker run --rm \
-#         -v "$(pwd):/code" \
-#         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-#         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-#         cosmwasm/rust-optimizer:0.12.4
-#     CARGO_CHECKSUM=$(sha256sum artifacts/*.wasm | awk '{print $1}')
+    docker run --rm \
+        -v "$(pwd):/code" \
+        --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+        --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+        $COMMIT
+    CARGO_CHECKSUM=$(sha256sum artifacts/*.wasm | awk '{print $1}')
+    echo $CARGO_CHECKSUM
 # fi
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
