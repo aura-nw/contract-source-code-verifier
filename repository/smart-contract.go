@@ -155,7 +155,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	// }
 
 	fmt.Println("Start verifying smart contract source code")
-	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.compilerVersion, config.RPC)
+	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerVersion, config.RPC)
 
 	if verify {
 		fmt.Println("Verify smart contract successful")
