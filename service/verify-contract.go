@@ -63,7 +63,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, conpilerVersion string, rpc string) (bool, string, string) {
+func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerVersion string, rpc string) (bool, string, string) {
 	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
 
 	dir, out, err := MakeTempDir()
