@@ -115,16 +115,15 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		DB:       0,
 	})
 	// Ping the Redis server and check if any errors occured
-	ping, err := redisClient.Ping(context.Background()).Result()
+	err = redisClient.Ping(context.Background()).Err()
 	if err != nil {
 		// Sleep for 3 seconds and wait for Redis to initialize
 		time.Sleep(3 * time.Second)
 		err := redisClient.Ping(context.Background()).Err()
 		if err != nil {
-			panic(err)
+			log.Println("Error ping redis: " + err.Error())
 		}
 	}
-	fmt.Println(ping)
 	// Generate a new background context that  we will use
 	ctx := context.Background()
 
@@ -132,36 +131,39 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CONTRACT_ADDRESS_NOT_FOUND, model.ResponseMessage[model.CONTRACT_ADDRESS_NOT_FOUND]))
+			log.Println("Contract address not found")
 			return
 		}
 
-		g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+		log.Println("Error get smart contract data: " + err.Error())
 		return
 	}
 
 	var contractHash string
 	if contract.ContractHash != "" {
 		contractHash = contract.ContractHash
-	}
-	// else {
-	// 	contractId := service.GetContractId(contract.ContractAddress, config.RPC)
+	} else {
+		contractId := service.GetContractId(contract.ContractAddress, config.RPC)
+		if contractId == "" {
+			log.Println("Error get contract Id: " + err.Error())
+			return
+		}
 
-	// 	hash, dir := service.GetContractHash(contractId, config.RPC)
-	// 	if hash == "" {
-	// 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
-	// 	}
-	// 	_ = service.RemoveTempDir(dir)
-	// }
+		hash, dir := service.GetContractHash(contractId, config.RPC)
+		if hash == "" {
+			return
+		}
+		_ = service.RemoveTempDir(dir)
+	}
 
 	fmt.Println("Start verifying smart contract source code")
 	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerVersion, config.RPC)
 
 	if verify {
 		fmt.Println("Verify smart contract successful")
-		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.DIR)
+		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.SCHEMA_DIR)
 		if err != nil {
-			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
+			log.Println("Error read schema dir: " + err.Error())
 			return
 		}
 
@@ -169,11 +171,11 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		var querySchema string
 		var executeSchema string
 		for _, file := range files {
-			log.Println(dir + "/" + contractFolder + config.DIR + file.Name())
-			data, err := ioutil.ReadFile(dir + "/" + contractFolder + config.DIR + file.Name())
+			log.Println(dir + "/" + contractFolder + config.SCHEMA_DIR + file.Name())
+			data, err := ioutil.ReadFile(dir + "/" + contractFolder + config.SCHEMA_DIR + file.Name())
 			if err != nil {
 				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.READ_FILE_ERROR, model.ResponseMessage[model.READ_FILE_ERROR]))
+				log.Println("Error read schema file: " + err.Error())
 				return
 			}
 
@@ -212,7 +214,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		err = model.UpdateSmartContract(repository.Db, &contract)
 		if err != nil {
 			_ = service.RemoveTempDir(dir)
-			g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+			log.Println("Error update smart contract: " + err.Error())
 			return
 		}
 
@@ -233,7 +235,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			err = model.UpdateMultipleSmartContract(repository.Db, &unverifiedContract)
 			if err != nil {
 				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+				log.Println("Error update similar contract: " + err.Error())
 				return
 			}
 		}
@@ -245,7 +247,9 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		err = redisClient.Publish(ctx, config.REDIS_CHANNEL, string(res)).Err()
 		if err != nil {
-			panic(err)
+			_ = service.RemoveTempDir(dir)
+			log.Println("Error publish to redis: " + err.Error())
+			return
 		}
 		// response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 	} else {
@@ -258,13 +262,15 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		err = redisClient.Publish(ctx, config.REDIS_CHANNEL, string(res)).Err()
 		if err != nil {
-			panic(err)
+			_ = service.RemoveTempDir(dir)
+			log.Println("Error publish to redis: " + err.Error())
+			return
 		}
 	}
 
 	err = service.RemoveTempDir(dir)
 	if err != nil {
-		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
+		log.Println("Error remove temp dir: " + err.Error())
 		return
 	}
 }

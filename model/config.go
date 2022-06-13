@@ -9,7 +9,7 @@ type Config struct {
 
 	RPC string `mapstructure:"RPC"`
 
-	DIR             string `mapstructure:"DIR"`
+	SCHEMA_DIR      string `mapstructure:"SCHEMA_DIR"`
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
 
 	SERVER string `mapstructure:"SERVER"`
