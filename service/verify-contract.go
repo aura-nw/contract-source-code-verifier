@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os/exec"
 	"smart-contract-verify/model"
 	"smart-contract-verify/util"
@@ -89,7 +90,7 @@ func RemoveTempDir(dir string) error {
 }
 
 func MakeTempDir() (string, []byte, error) {
-	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix())
+	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix()) + fmt.Sprint(rand.Int())
 	out, err := exec.Command("mkdir", dir).CombinedOutput()
 	return dir, out, err
 }
