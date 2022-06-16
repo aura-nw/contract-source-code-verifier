@@ -127,6 +127,12 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	// Generate a new background context that  we will use
 	ctx := context.Background()
 
+	err = redisClient.Set(ctx, request.ContractAddress, "Verifying", 0).Err()
+	if err != nil {
+		log.Println("Error set verifying process key value to redis: " + err.Error())
+		return
+	}
+
 	var contract model.SmartContract
 	err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
 	if err != nil {
@@ -251,9 +257,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			log.Println("Error publish to redis: " + err.Error())
 			return
 		}
-		// response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 	} else {
-		// response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
 		result := model.RedisResponse{
 			ContractAddress: request.ContractAddress,
 			Verified:        false,
@@ -267,6 +271,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			return
 		}
 	}
+	redisClient.Close()
 
 	err = service.RemoveTempDir(dir)
 	if err != nil {
