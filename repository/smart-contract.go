@@ -152,11 +152,18 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contractId := service.GetContractId(contract.ContractAddress, config.RPC)
 		if contractId == "" {
 			log.Println("Error get contract Id: " + err.Error())
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			return
+		} else if contractId == "1" || contractId == "2" || contractId == "3" {
+			log.Println("This is not a common smart contract")
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
 
 		hash, dir := service.GetContractHash(contractId, config.RPC)
 		if hash == "" {
+			log.Println("Cannot get contract hash")
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
 		_ = service.RemoveTempDir(dir)
@@ -170,6 +177,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.SCHEMA_DIR)
 		if err != nil {
 			log.Println("Error read schema dir: " + err.Error())
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
 
@@ -182,6 +190,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			if err != nil {
 				_ = service.RemoveTempDir(dir)
 				log.Println("Error read schema file: " + err.Error())
+				PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 				return
 			}
 
@@ -245,37 +254,32 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				return
 			}
 		}
-		result := model.RedisResponse{
-			ContractAddress: request.ContractAddress,
-			Verified:        true,
-		}
-		res, _ := json.Marshal(result)
-
-		err = redisClient.Publish(ctx, config.REDIS_CHANNEL, string(res)).Err()
-		if err != nil {
-			_ = service.RemoveTempDir(dir)
-			log.Println("Error publish to redis: " + err.Error())
-			return
-		}
+		PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
 	} else {
-		result := model.RedisResponse{
-			ContractAddress: request.ContractAddress,
-			Verified:        false,
-		}
-		res, _ := json.Marshal(result)
-
-		err = redisClient.Publish(ctx, config.REDIS_CHANNEL, string(res)).Err()
-		if err != nil {
-			_ = service.RemoveTempDir(dir)
-			log.Println("Error publish to redis: " + err.Error())
-			return
-		}
+		PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, false)
 	}
 	redisClient.Close()
 
 	err = service.RemoveTempDir(dir)
 	if err != nil {
 		log.Println("Error remove temp dir: " + err.Error())
+		return
+	}
+}
+
+func PublishRedisMessage(ctx context.Context, redisClient *redis.Client, contractAddress string, redisChannel string, dir string, verified bool) {
+	result := model.RedisResponse{
+		ContractAddress: contractAddress,
+		Verified:        verified,
+	}
+	res, _ := json.Marshal(result)
+
+	err := redisClient.Publish(ctx, redisChannel, string(res)).Err()
+	if err != nil {
+		if dir != "" {
+			_ = service.RemoveTempDir(dir)
+		}
+		log.Println("Error publish to redis: " + err.Error())
 		return
 	}
 }
