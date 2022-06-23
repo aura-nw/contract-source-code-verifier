@@ -49,38 +49,6 @@
                 }
             }
         },
-        "/smart-contract/get-unverified-contract/{contractHash}": {
-            "get": {
-                "description": "Return all unverified contract with provided hash",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "smart-contract"
-                ],
-                "summary": "Test get unverified contract",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Get list unverified contract",
-                        "name": "contractHash",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.JsonResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/smart-contract/verify": {
             "post": {
                 "description": "Compare if source code truely belongs to deployed smart contract",

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,8 +13,10 @@ import (
 	"smart-contract-verify/service"
 	"smart-contract-verify/util"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -47,12 +50,6 @@ func New() *SmartContractRepo {
 func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	response := model.JsonResponse{}
 
-	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
-
 	params, err := ioutil.ReadAll(g.Request.Body)
 	var request model.VerifyContractRequest
 	err = json.Unmarshal(params, &request)
@@ -61,38 +58,126 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		return
 	}
 
+	response = util.CustomResponse(model.SUCCESSFUL, "")
+	g.JSON(http.StatusOK, response)
+
+	go InstantResponse(repository, g, request)
+}
+
+// @BasePath /api/v1
+// CallGetContractHash godoc
+// @Summary Get the hash of a deployed contract
+// @Description Return the hash of a contract provided its code Id
+// @Tags smart-contract
+// @Accept  json
+// @Produce  json
+// @Param contractId path string true "Get contract hash"
+// @Success 200 {object} model.JsonResponse
+// @Router /smart-contract/get-hash/{contractId} [get]
+func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
+	response := model.JsonResponse{}
+
+	// Load config
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Panic("Cannot load config:", err)
+	}
+
+	contractId := g.Param("contractId")
+
+	hash, dir := service.GetContractHash(contractId, config.RPC)
+	if hash == "" {
+		response = util.CustomResponse(model.ERROR_GET_HASH, model.ResponseMessage[model.ERROR_GET_HASH])
+	} else {
+		response = util.CustomResponse(model.SUCCESSFUL, hash)
+	}
+
+	err = service.RemoveTempDir(dir)
+	if err != nil {
+		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
+		return
+	}
+
+	g.JSON(http.StatusOK, response)
+}
+
+func InstantResponse(repository *SmartContractRepo, g *gin.Context, request model.VerifyContractRequest) {
+	// Load config
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Panic("Cannot load config:", err)
+	}
+
+	// Create a new Redis Client
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     config.REDIS_HOST + ":" + config.REDIS_PORT, // We connect to host redis, thats what the hostname of the redis service is set to in the docker-compose
+		Password: "",                                          // The password IF set in the redis Config file
+		DB:       0,
+	})
+	// Ping the Redis server and check if any errors occured
+	err = redisClient.Ping(context.Background()).Err()
+	if err != nil {
+		// Sleep for 3 seconds and wait for Redis to initialize
+		time.Sleep(3 * time.Second)
+		err := redisClient.Ping(context.Background()).Err()
+		if err != nil {
+			log.Println("Error ping redis: " + err.Error())
+		}
+	}
+	// Generate a new background context that  we will use
+	ctx := context.Background()
+
+	err = redisClient.Set(ctx, request.ContractAddress, "Verifying", 0).Err()
+	if err != nil {
+		log.Println("Error set verifying process key value to redis: " + err.Error())
+		return
+	}
+
 	var contract model.SmartContract
 	err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CONTRACT_ADDRESS_NOT_FOUND, model.ResponseMessage[model.CONTRACT_ADDRESS_NOT_FOUND]))
+			log.Println("Contract address not found")
 			return
 		}
 
-		g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+		log.Println("Error get smart contract data: " + err.Error())
 		return
 	}
 
 	var contractHash string
 	if contract.ContractHash != "" {
 		contractHash = contract.ContractHash
+	} else {
+		contractId := service.GetContractId(contract.ContractAddress, config.RPC)
+		if contractId == "" {
+			log.Println("Error get contract Id: " + err.Error())
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			return
+		} else if contractId == "1" || contractId == "2" || contractId == "3" {
+			log.Println("This is not a common smart contract")
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			return
+		}
+
+		hash, dir := service.GetContractHash(contractId, config.RPC)
+		if hash == "" {
+			log.Println("Cannot get contract hash")
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			return
+		}
+		_ = service.RemoveTempDir(dir)
 	}
-	// else {
-	// 	contractId := service.GetContractId(contract.ContractAddress, config.RPC)
 
-	// 	hash, dir := service.GetContractHash(contractId, config.RPC)
-	// 	if hash == "" {
-	// 		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
-	// 	}
-	// 	_ = service.RemoveTempDir(dir)
-	// }
-
-	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, config.RPC)
+	fmt.Println("Start verifying smart contract source code")
+	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerVersion, config.RPC)
 
 	if verify {
-		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.DIR)
+		fmt.Println("Verify smart contract successful")
+		files, err := ioutil.ReadDir(dir + "/" + contractFolder + config.SCHEMA_DIR)
 		if err != nil {
-			g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.DIR_NOT_FOUND, model.ResponseMessage[model.DIR_NOT_FOUND]))
+			log.Println("Error read schema dir: " + err.Error())
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
 
@@ -100,11 +185,12 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		var querySchema string
 		var executeSchema string
 		for _, file := range files {
-			log.Println(dir + "/" + contractFolder + config.DIR + file.Name())
-			data, err := ioutil.ReadFile(dir + "/" + contractFolder + config.DIR + file.Name())
+			log.Println(dir + "/" + contractFolder + config.SCHEMA_DIR + file.Name())
+			data, err := ioutil.ReadFile(dir + "/" + contractFolder + config.SCHEMA_DIR + file.Name())
 			if err != nil {
 				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.READ_FILE_ERROR, model.ResponseMessage[model.READ_FILE_ERROR]))
+				log.Println("Error read schema file: " + err.Error())
+				PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 				return
 			}
 
@@ -143,7 +229,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		err = model.UpdateSmartContract(repository.Db, &contract)
 		if err != nil {
 			_ = service.RemoveTempDir(dir)
-			g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+			log.Println("Error update smart contract: " + err.Error())
 			return
 		}
 
@@ -164,86 +250,36 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 			err = model.UpdateMultipleSmartContract(repository.Db, &unverifiedContract)
 			if err != nil {
 				_ = service.RemoveTempDir(dir)
-				g.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": err})
+				log.Println("Error update similar contract: " + err.Error())
 				return
 			}
 		}
-
-		response = util.CustomResponse(model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
+		PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
 	} else {
-		response = util.CustomResponse(model.FAILED, model.ResponseMessage[model.FAILED])
+		PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, false)
 	}
+	redisClient.Close()
 
 	err = service.RemoveTempDir(dir)
 	if err != nil {
-		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
+		log.Println("Error remove temp dir: " + err.Error())
 		return
 	}
-
-	g.IndentedJSON(http.StatusOK, response)
 }
 
-// @BasePath /api/v1
-// CallGetContractHash godoc
-// @Summary Get the hash of a deployed contract
-// @Description Return the hash of a contract provided its code Id
-// @Tags smart-contract
-// @Accept  json
-// @Produce  json
-// @Param contractId path string true "Get contract hash"
-// @Success 200 {object} model.JsonResponse
-// @Router /smart-contract/get-hash/{contractId} [get]
-func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
-	response := model.JsonResponse{}
-
-	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
+func PublishRedisMessage(ctx context.Context, redisClient *redis.Client, contractAddress string, redisChannel string, dir string, verified bool) {
+	result := model.RedisResponse{
+		ContractAddress: contractAddress,
+		Verified:        verified,
 	}
+	res, _ := json.Marshal(result)
 
-	contractId := g.Param("contractId")
-
-	hash, dir := service.GetContractHash(contractId, config.RPC)
-	if hash == "" {
-		response = util.CustomResponse(model.ERROR_GET_HASH, model.ResponseMessage[model.ERROR_GET_HASH])
-	} else {
-		response = util.CustomResponse(model.SUCCESSFUL, hash)
-	}
-
-	err = service.RemoveTempDir(dir)
+	err := redisClient.Publish(ctx, redisChannel, string(res)).Err()
 	if err != nil {
-		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
+		if dir != "" {
+			_ = service.RemoveTempDir(dir)
+		}
+		log.Println("Error publish to redis: " + err.Error())
 		return
 	}
-
-	g.IndentedJSON(http.StatusOK, response)
-}
-
-// @BasePath /api/v1
-// TestQueryGetAll godoc
-// @Summary Test get unverified contract
-// @Description Return all unverified contract with provided hash
-// @Tags smart-contract
-// @Accept  json
-// @Produce  json
-// @Param contractHash path string true "Get list unverified contract"
-// @Success 200 {object} model.JsonResponse
-// @Router /smart-contract/get-unverified-contract/{contractHash} [get]
-func (repository *SmartContractRepo) TestQueryGetAll(g *gin.Context) {
-	response := model.JsonResponse{}
-
-	contractHash := g.Param("contractHash")
-
-	var unverifiedContract []model.SmartContract
-	err := model.GetUnverifiedSmartContractByHash(repository.Db, &unverifiedContract, contractHash)
-	if err != nil {
-		response = util.CustomResponse(model.FAILED, err.Error())
-	} else {
-		log.Println(len(unverifiedContract))
-		res, _ := json.Marshal(unverifiedContract)
-		response = util.CustomResponse(model.SUCCESSFUL, string(res))
-	}
-
-	g.IndentedJSON(http.StatusOK, response)
 }

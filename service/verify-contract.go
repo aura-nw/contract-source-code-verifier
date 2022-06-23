@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os/exec"
 	"smart-contract-verify/model"
 	"smart-contract-verify/util"
@@ -15,8 +16,8 @@ import (
 func GetContractId(contractAddress string, rpc string) string {
 	out, err := exec.Command("aurad", "query", "wasm", "contract", contractAddress, "--node", rpc, "--output", "json").CombinedOutput() // , "| jq"
 	if err != nil {
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error get contract Id: " + err.Error())
+		// log.Println("Execute command error: " + string(out))
+		// log.Println("Error get contract Id: " + err.Error())
 		return ""
 	}
 	log.Println("Contract Info: " + string(out))
@@ -63,22 +64,13 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, rpc string) (bool, string, string) {
-	// hash, dir := GetContractHash(contractId, rpc)
-	// if hash == "" {
-	// 	return false, dir
-	// }
-
-	var contractFolder string
-	if strings.Contains(contractUrl, ".git") {
-		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : strings.LastIndex(contractUrl, ".")]
-	} else {
-		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
-	}
+func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerVersion string, rpc string) (bool, string, string) {
+	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
 
 	dir, out, err := MakeTempDir()
+	log.Println("Create dir successful: ", dir)
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, "").CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion).CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
@@ -98,7 +90,7 @@ func RemoveTempDir(dir string) error {
 }
 
 func MakeTempDir() (string, []byte, error) {
-	dir := "tempdir" + fmt.Sprint(time.Now().Unix())
+	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix()) + fmt.Sprint(rand.Int())
 	out, err := exec.Command("mkdir", dir).CombinedOutput()
 	return dir, out, err
 }
