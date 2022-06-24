@@ -5,6 +5,11 @@ type JsonResponse struct {
 	Message string
 }
 
+type RedisResponse struct {
+	ContractAddress string
+	Verified        bool
+}
+
 const (
 	SUCCESSFUL                 string = "SUCCESSFUL"
 	FAILED                            = "FAILED"
