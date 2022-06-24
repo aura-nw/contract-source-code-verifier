@@ -52,27 +52,6 @@ paths:
       summary: Get the hash of a deployed contract
       tags:
       - smart-contract
-  /smart-contract/get-unverified-contract/{contractHash}:
-    get:
-      consumes:
-      - application/json
-      description: Return all unverified contract with provided hash
-      parameters:
-      - description: Get list unverified contract
-        in: path
-        name: contractHash
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.JsonResponse'
-      summary: Test get unverified contract
-      tags:
-      - smart-contract
   /smart-contract/verify:
     post:
       consumes:

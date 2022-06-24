@@ -5,34 +5,25 @@ EXPECTED_CHECKSUM="$3"
 DIR="$4"
 CONTRACT_FOLDER="$5"
 COMPILER_IMAGE="$6"
-# DOWNLOAD_FILE=download_contract.tar
-# DOWNLOAD_DIR=$DIR/download_contract.tar
 
-# if [ "$URL_OPTION" == "0" ]; then
-#     wget --no-verbose -O "$DOWNLOAD_DIR" "$SOURCE_URL"
-#     SOURCE_CHECKSUM=$(sha256sum "$DOWNLOAD_DIR")
-#     cd $DIR
-#     tar -x --strip-components 1 -f "$DOWNLOAD_FILE"
-# else 
-    cd $DIR
-    git clone $SOURCE_URL
-    cd $CONTRACT_FOLDER
-    git checkout $COMMIT
-# fi
+cd $DIR
+git clone $SOURCE_URL
+cd $CONTRACT_FOLDER
+git checkout $COMMIT
 
-cargo build
-
-if [ "$COMPILER_IMAGE" == "" ]; then
-    RUSTFLAGS='-C link-arg=-s' cargo wasm
-    CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
-else
+# if [ "$COMPILER_IMAGE" == "" ]; then
+    # RUSTFLAGS='-C link-arg=-s' cargo wasm
+    # CARGO_CHECKSUM=$(sha256sum target/wasm32-unknown-unknown/release/*.wasm | awk '{print $1}')
+    # echo $CARGO_CHECKSUM
+# else
     docker run --rm \
         -v "$(pwd):/code" \
         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-        cosmwasm/rust-optimizer:0.12.4
+        $COMPILER_IMAGE
     CARGO_CHECKSUM=$(sha256sum artifacts/*.wasm | awk '{print $1}')
-fi
+    echo $CARGO_CHECKSUM
+# fi
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
     cargo schema

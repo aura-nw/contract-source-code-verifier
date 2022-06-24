@@ -9,8 +9,12 @@ type Config struct {
 
 	RPC string `mapstructure:"RPC"`
 
-	DIR             string `mapstructure:"DIR"`
+	SCHEMA_DIR      string `mapstructure:"SCHEMA_DIR"`
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
 
 	SERVER string `mapstructure:"SERVER"`
+
+	REDIS_HOST    string `mapstructure:"REDIS_HOST"`
+	REDIS_PORT    string `mapstructure:"REDIS_PORT"`
+	REDIS_CHANNEL string `mapstructure:"REDIS_CHANNEL"`
 }
