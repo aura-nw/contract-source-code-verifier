@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "host": "verify.halo.aura.network",
+    "host": "verify.halo.aurascan.io",
     "basePath": "/",
     "paths": {
         "/smart-contract/get-hash/{contractId}": {
