@@ -154,10 +154,6 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			log.Println("Error get contract Id: " + err.Error())
 			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
-		} else if contractId == "1" || contractId == "2" || contractId == "3" {
-			log.Println("This is not a common smart contract")
-			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
-			return
 		}
 
 		hash, dir := service.GetContractHash(contractId, config.RPC)
