@@ -13,6 +13,7 @@ import (
 	"smart-contract-verify/service"
 	"smart-contract-verify/util"
 	"strings"
+
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -166,6 +167,8 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
+		log.Println("Result get contract hash: ", hash)
+		contractHash = hash
 		_ = service.RemoveTempDir(dir)
 	}
 
@@ -210,6 +213,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			gitUrl = request.ContractUrl
 		}
 		gitUrl = gitUrl + "/commit/" + request.Commit
+		contract.ContractHash = contractHash
 		contract.Url = gitUrl
 		contract.CompilerVersion = request.CompilerVersion
 		contract.InstantiateMsgSchema = instantiateSchema
