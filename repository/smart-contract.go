@@ -58,6 +58,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		fmt.Println("Can't unmarshal the byte array")
 		return
 	}
+	log.Println("Verify contract request: ", request)
 
 	response = util.CustomResponse(model.SUCCESSFUL, "")
 	g.JSON(http.StatusOK, response)
@@ -218,6 +219,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		var exactContract model.SmartContract
 		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contract.ContractHash)
+		log.Println("Result get exact contract by hash: ", exactContract)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			contract.ContractVerification = model.EXACT_MATCH
 		} else {
