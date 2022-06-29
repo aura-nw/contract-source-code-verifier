@@ -10,6 +10,7 @@ cd $DIR
 git clone $SOURCE_URL
 cd $CONTRACT_FOLDER
 git checkout $COMMIT
+rm -rf artifacts
 
 # if [ "$COMPILER_IMAGE" == "" ]; then
     # RUSTFLAGS='-C link-arg=-s' cargo wasm
