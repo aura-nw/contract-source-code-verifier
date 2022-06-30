@@ -126,7 +126,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "verify.serenity.aurascan.io",
+	Host:             "verify-job.dev.aura.network",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Verify Smart Contract API",
