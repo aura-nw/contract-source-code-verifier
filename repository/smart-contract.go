@@ -167,6 +167,33 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		log.Println("Result get contract hash: ", hash)
 		contractHash = hash
 		_ = service.RemoveTempDir(dir)
+
+		var exactContract model.SmartContract
+		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contractHash)
+		log.Println("Result get exact contract by hash: ", exactContract)
+		if err == nil {
+			contract.ContractVerification = model.SIMILAR_MATCH
+			contract.ContractMatch = exactContract.ContractAddress
+			contract.ContractHash = exactContract.ContractHash
+			contract.Url = exactContract.Url
+			contract.InstantiateMsgSchema = exactContract.InstantiateMsgSchema
+			contract.QueryMsgSchema = exactContract.QueryMsgSchema
+			contract.ExecuteMsgSchema = exactContract.ExecuteMsgSchema
+			contract.CompilerVersion = exactContract.CompilerVersion
+			// Set S3 repo dir
+
+			g.BindJSON(&contract)
+			err = model.UpdateSmartContract(repository.Db, &contract)
+			if err != nil {
+				_ = service.RemoveTempDir(dir)
+				log.Println("Error update smart contract: " + err.Error())
+				return
+			}
+			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
+			return
+		} else {
+			contract.ContractVerification = model.EXACT_MATCH
+		}
 	}
 
 	fmt.Println("Start verifying smart contract source code")
@@ -217,16 +244,6 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contract.QueryMsgSchema = querySchema
 		contract.ExecuteMsgSchema = executeSchema
 
-		var exactContract model.SmartContract
-		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contract.ContractHash)
-		log.Println("Result get exact contract by hash: ", exactContract)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			contract.ContractVerification = model.EXACT_MATCH
-		} else {
-			contract.ContractVerification = model.SIMILAR_MATCH
-			contract.ContractMatch = exactContract.ContractAddress
-		}
-
 		g.BindJSON(&contract)
 		err = model.UpdateSmartContract(repository.Db, &contract)
 		if err != nil {
@@ -234,6 +251,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			log.Println("Error update smart contract: " + err.Error())
 			return
 		}
+		// Upload zipped source code to S3
 
 		if contract.ContractVerification == model.EXACT_MATCH {
 			var unverifiedContract []model.SmartContract
