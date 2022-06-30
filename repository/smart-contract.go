@@ -191,8 +191,6 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			}
 			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
 			return
-		} else {
-			contract.ContractVerification = model.EXACT_MATCH
 		}
 	}
 
@@ -237,6 +235,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			gitUrl = request.ContractUrl
 		}
 		gitUrl = gitUrl + "/commit/" + request.Commit
+		contract.ContractVerification = model.EXACT_MATCH
 		contract.ContractHash = contractHash
 		contract.Url = gitUrl
 		contract.CompilerVersion = request.CompilerVersion
