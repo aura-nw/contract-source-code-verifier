@@ -28,6 +28,7 @@ rm -rf artifacts
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
     cargo schema
+    zip -r contract.zip $CONTRACT_FOLDER
     exit 0
 else 
     exit 1

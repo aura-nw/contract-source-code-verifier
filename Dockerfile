@@ -5,7 +5,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update
 RUN apt-get install wget git gcc ca-certificates gnupg lsb-release -y
 RUN apt update && apt upgrade -y
-RUN apt install curl make bash -y
+RUN apt install curl make bash zip -y
 
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
