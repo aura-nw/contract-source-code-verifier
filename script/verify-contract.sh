@@ -5,6 +5,7 @@ EXPECTED_CHECKSUM="$3"
 DIR="$4"
 CONTRACT_FOLDER="$5"
 COMPILER_IMAGE="$6"
+WASM_FILE="$7"
 
 cd $DIR
 git clone $SOURCE_URL
@@ -22,7 +23,7 @@ rm -rf artifacts
         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
         $COMPILER_IMAGE
-    CARGO_CHECKSUM=$(sha256sum artifacts/*.wasm | awk '{print $1}')
+    CARGO_CHECKSUM=$(sha256sum artifacts/$WASM_FILE | awk '{print $1}')
     echo $CARGO_CHECKSUM
 # fi
 

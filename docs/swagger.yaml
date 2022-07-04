@@ -17,6 +17,8 @@ definitions:
         type: string
       contractUrl:
         type: string
+      wasmFile:
+        type: string
     type: object
 host: verify.halo.aurascan.io
 info:

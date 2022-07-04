@@ -117,6 +117,9 @@ const docTemplate = `{
                 },
                 "contractUrl": {
                     "type": "string"
+                },
+                "wasmFile": {
+                    "type": "string"
                 }
             }
         }

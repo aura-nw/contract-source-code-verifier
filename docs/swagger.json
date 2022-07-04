@@ -110,6 +110,9 @@
                 },
                 "contractUrl": {
                     "type": "string"
+                },
+                "wasmFile": {
+                    "type": "string"
                 }
             }
         }
