@@ -38,7 +38,6 @@ func main() {
 		{
 			eg.POST("/verify", smartContractRepo.CallVerifyContractCode)
 			eg.GET("/get-hash/:contractId", smartContractRepo.CallGetContractHash)
-			eg.POST("/test-upload-s3", smartContractRepo.TestUploadToS3)
 		}
 	}
 

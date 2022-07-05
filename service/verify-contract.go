@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -12,11 +11,6 @@ import (
 	"time"
 
 	"log"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/gin-gonic/gin"
 )
 
 func GetContractId(contractAddress string, rpc string) string {
@@ -98,29 +92,4 @@ func MakeTempDir() (string, []byte, error) {
 	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix()) + fmt.Sprint(rand.Int())
 	out, err := exec.Command("mkdir", dir).CombinedOutput()
 	return dir, out, err
-}
-
-func UploadContractCode(c *gin.Context, fileName string, file []byte) string {
-	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
-
-	session := c.MustGet("session").(*session.Session)
-	uploader := s3manager.NewUploader(session)
-
-	//upload to the s3 bucket
-	up, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(config.BUCKET_NAME),
-		Key:    aws.String(config.AWS_FOLDER + fileName),
-		Body:   bytes.NewBuffer(file),
-	})
-
-	if err != nil {
-		log.Println("Error upload contract code to S3: " + err.Error())
-		return ""
-	}
-	log.Println("Upload contract code to S3 successful: ", up)
-	return up.Location
 }

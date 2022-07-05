@@ -339,25 +339,3 @@ func PublishRedisMessage(ctx context.Context, redisClient *redis.Client, contrac
 		return
 	}
 }
-
-// @BasePath /api/v1
-// TestUploadToS3 godoc
-// @Summary Test upload S3
-// @Description Upload S3
-// @Tags smart-contract
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} model.JsonResponse
-// @Router /smart-contract/test-upload-s3 [post]
-func (repository *SmartContractRepo) TestUploadToS3(g *gin.Context) {
-	response := model.JsonResponse{}
-
-	file, _ := ioutil.ReadFile("test-2.zip")
-
-	uploadLocation := service.UploadContractCode(g, "test-2.zip", file)
-	response = model.JsonResponse{
-		Message: uploadLocation,
-	}
-
-	g.JSON(http.StatusOK, response)
-}
