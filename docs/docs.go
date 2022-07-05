@@ -56,29 +56,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/smart-contract/test-upload-s3": {
-            "post": {
-                "description": "Upload S3",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "smart-contract"
-                ],
-                "summary": "Test upload S3",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.JsonResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/smart-contract/verify": {
             "post": {
                 "description": "Compare if source code truely belongs to deployed smart contract",
@@ -155,7 +132,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "verify-job.dev.aura.network",
+	Host:             "verify.halo.aurascan.io",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Verify Smart Contract API",
