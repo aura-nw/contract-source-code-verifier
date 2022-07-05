@@ -17,9 +17,13 @@ type SmartContract struct {
 	CreatorAddress       string
 	ContractHash         string
 	Url                  string
+	InstantiateMsgSchema string
+	QueryMsgSchema       string
+	ExecuteMsgSchema     string
 	ContractMatch        string
 	ContractVerification string
 	CompilerVersion      string
+	S3Location           string
 }
 
 // Find a smart contract

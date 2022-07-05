@@ -56,9 +56,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/smart-contract/get-unverified-contract/{contractHash}": {
-            "get": {
-                "description": "Return all unverified contract with provided hash",
+        "/smart-contract/test-upload-s3": {
+            "post": {
+                "description": "Upload S3",
                 "consumes": [
                     "application/json"
                 ],
@@ -68,16 +68,7 @@ const docTemplate = `{
                 "tags": [
                     "smart-contract"
                 ],
-                "summary": "Test get unverified contract",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Get list unverified contract",
-                        "name": "contractHash",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Test upload S3",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -147,7 +138,13 @@ const docTemplate = `{
                 "contractAddress": {
                     "type": "string"
                 },
+                "contractDir": {
+                    "type": "string"
+                },
                 "contractUrl": {
+                    "type": "string"
+                },
+                "wasmFile": {
                     "type": "string"
                 }
             }

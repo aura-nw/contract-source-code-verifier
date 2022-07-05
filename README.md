@@ -6,6 +6,16 @@ This application provide API for Explorer app to verify if a smart contract sour
 ## Method
 This project is built following the flow of verifying a smart contract of [CosmWasm documentation](https://docs.cosmwasm.com/docs/1.0/smart-contracts/verify/).
 
+## Repo Structure
+-   `/database`: Create connection to MySQL Database
+-   `/docs`: Contains swagger documents
+-   `/model`: Contains smart contract entity, request model, config, etc.
+-   `/repository`: Contains services to query data from and update data to DB
+-   `/script`: Contains shell script file to process verification step
+-   `/service`: Contains functions to query data onchain through CLI commands
+-   `/util`: Contains common functions
+-   `/aws`: Create connection to AWS S3 Service
+
 ## Prerequisite
 ### Go
 You can set up Golang following the [official documentation](https://github.com/golang/go/wiki#working-with-go). This application require go version v1.17+.  

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -8,15 +9,19 @@ import (
 	"smart-contract-verify/model"
 	"smart-contract-verify/util"
 	"strings"
+	"time"
 
 	"log"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/gin-gonic/gin"
 )
 
 func GetContractId(contractAddress string, rpc string) string {
 	out, err := exec.Command("aurad", "query", "wasm", "contract", contractAddress, "--node", rpc, "--output", "json").CombinedOutput() // , "| jq"
 	if err != nil {
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error get contract Id: " + err.Error())
 		return ""
 	}
 	log.Println("Contract Info: " + string(out))
@@ -63,30 +68,22 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, rpc string) (bool, string) {
-	// hash, dir := GetContractHash(contractId, rpc)
-	// if hash == "" {
-	// 	return false, dir
-	// }
-
-	var contractFolder string
-	if strings.Contains(contractUrl, ".git") {
-		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : strings.LastIndex(contractUrl, ".")]
-	} else {
-		contractFolder = contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
-	}
+func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerVersion string, rpc string, wasmFile string, contractDir string, codeId string) (bool, string, string) {
+	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
 
 	dir, out, err := MakeTempDir()
+	log.Println("Create dir successful: ", dir)
+	tempDir := strings.Split(dir, "/")[len(strings.Split(dir, "/"))-1]
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder).CombinedOutput()
+	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion, wasmFile, contractDir, tempDir, codeId).CombinedOutput()
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error verify smart contract code: " + err.Error())
-		return false, dir
+		return false, dir, contractFolder
 	}
 	log.Println("Result VerifyContractCode: " + string(out))
-	return true, dir
+	return true, dir, contractFolder
 }
 
 func RemoveTempDir(dir string) error {
@@ -98,7 +95,32 @@ func RemoveTempDir(dir string) error {
 }
 
 func MakeTempDir() (string, []byte, error) {
-	dir := "tempdir" + fmt.Sprint(rand.Int())
+	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix()) + fmt.Sprint(rand.Int())
 	out, err := exec.Command("mkdir", dir).CombinedOutput()
 	return dir, out, err
+}
+
+func UploadContractCode(c *gin.Context, fileName string, file []byte) string {
+	// Load config
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Panic("Cannot load config:", err)
+	}
+
+	session := c.MustGet("session").(*session.Session)
+	uploader := s3manager.NewUploader(session)
+
+	//upload to the s3 bucket
+	up, err := uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(config.BUCKET_NAME),
+		Key:    aws.String(config.AWS_FOLDER + fileName),
+		Body:   bytes.NewBuffer(file),
+	})
+
+	if err != nil {
+		log.Println("Error upload contract code to S3: " + err.Error())
+		return ""
+	}
+	log.Println("Upload contract code to S3 successful: ", up)
+	return up.Location
 }

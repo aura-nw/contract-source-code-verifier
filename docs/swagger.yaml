@@ -15,7 +15,11 @@ definitions:
         type: string
       contractAddress:
         type: string
+      contractDir:
+        type: string
       contractUrl:
+        type: string
+      wasmFile:
         type: string
     type: object
 host: localhost:8080
@@ -52,17 +56,11 @@ paths:
       summary: Get the hash of a deployed contract
       tags:
       - smart-contract
-  /smart-contract/get-unverified-contract/{contractHash}:
-    get:
+  /smart-contract/test-upload-s3:
+    post:
       consumes:
       - application/json
-      description: Return all unverified contract with provided hash
-      parameters:
-      - description: Get list unverified contract
-        in: path
-        name: contractHash
-        required: true
-        type: string
+      description: Upload S3
       produces:
       - application/json
       responses:
@@ -70,7 +68,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.JsonResponse'
-      summary: Test get unverified contract
+      summary: Test upload S3
       tags:
       - smart-contract
   /smart-contract/verify:

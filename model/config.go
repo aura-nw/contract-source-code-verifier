@@ -9,6 +9,18 @@ type Config struct {
 
 	RPC string `mapstructure:"RPC"`
 
-	DIR             string `mapstructure:"DIR"`
+	SCHEMA_DIR      string `mapstructure:"SCHEMA_DIR"`
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
+
+	SERVER string `mapstructure:"SERVER"`
+
+	REDIS_HOST    string `mapstructure:"REDIS_HOST"`
+	REDIS_PORT    string `mapstructure:"REDIS_PORT"`
+	REDIS_CHANNEL string `mapstructure:"REDIS_CHANNEL"`
+
+	AWS_REGION            string `mapstructure:"AWS_REGION"`
+	AWS_ACCESS_KEY_ID     string `mapstructure:"AWS_ACCESS_KEY_ID"`
+	AWS_SECRET_ACCESS_KEY string `mapstructure:"AWS_SECRET_ACCESS_KEY"`
+	BUCKET_NAME           string `mapstructure:"BUCKET_NAME"`
+	AWS_FOLDER            string `mapstructure:"AWS_FOLDER"`
 }

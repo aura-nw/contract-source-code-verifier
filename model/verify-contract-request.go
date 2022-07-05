@@ -5,4 +5,6 @@ type VerifyContractRequest struct {
 	Commit          string `json:"commit"`
 	ContractAddress string `json:"contractAddress"`
 	CompilerVersion string `json:"compilerVersion"`
+	WasmFile        string `json:"wasmFile"`
+	ContractDir     string `json:"contractDir"`
 }
