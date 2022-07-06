@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,20 +8,14 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"smart-contract-verify/database"
+	"smart-contract-verify/cloud"
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
 	"smart-contract-verify/util"
 	"strconv"
 	"strings"
 
-	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -39,7 +31,7 @@ type SmartContractRepo struct {
 }
 
 func New() *SmartContractRepo {
-	db := database.InitDb()
+	db := cloud.InitDb()
 	// db.AutoMigrate(&model.SmartContract{})
 	return &SmartContractRepo{Db: db}
 }
@@ -86,10 +78,7 @@ func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
 	response := model.JsonResponse{}
 
 	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
+	config, _ := util.LoadConfig(".")
 
 	contractId := g.Param("contractId")
 
@@ -100,49 +89,22 @@ func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
 		response = util.CustomResponse(model.SUCCESSFUL, hash)
 	}
 
-	err = service.RemoveTempDir(dir)
-	if err != nil {
-		g.AbortWithStatusJSON(http.StatusInternalServerError, util.CustomResponse(model.CANT_REMOVE_CODE, model.ResponseMessage[model.CANT_REMOVE_CODE]))
-		return
-	}
+	_ = util.RemoveTempDir(dir)
 
 	g.JSON(http.StatusOK, response)
 }
 
 func InstantResponse(repository *SmartContractRepo, g *gin.Context, request model.VerifyContractRequest) {
 	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
+	config, _ := util.LoadConfig(".")
 
-	// Create a new Redis Client
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     config.REDIS_HOST + ":" + config.REDIS_PORT, // We connect to host redis, thats what the hostname of the redis service is set to in the docker-compose
-		Password: "",                                          // The password IF set in the redis Config file
-		DB:       0,
-	})
-	// Ping the Redis server and check if any errors occured
-	err = redisClient.Ping(context.Background()).Err()
-	if err != nil {
-		// Sleep for 3 seconds and wait for Redis to initialize
-		time.Sleep(3 * time.Second)
-		err := redisClient.Ping(context.Background()).Err()
-		if err != nil {
-			log.Println("Error ping redis: " + err.Error())
-		}
-	}
-	// Generate a new background context that  we will use
-	ctx := context.Background()
+	// Initialize redis	client
+	redisClient, ctx := cloud.ConnectRedis()
 
-	err = redisClient.Set(ctx, request.ContractAddress, "Verifying", 0).Err()
-	if err != nil {
-		log.Println("Error set verifying process key value to redis: " + err.Error())
-		return
-	}
+	_ = redisClient.Set(ctx, request.ContractAddress, "Verifying", 0).Err()
 
 	var contract model.SmartContract
-	err = model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
+	err := model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Println("Contract address not found")
@@ -160,15 +122,15 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		hash, dir := service.GetContractHash(strconv.Itoa(contract.CodeId), config.RPC)
 		if hash == "" {
 			log.Println("Cannot get contract hash")
-			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
 		log.Println("Result get contract hash: ", hash)
 		contractHash = hash
-		_ = service.RemoveTempDir(dir)
+		_ = util.RemoveTempDir(dir)
 
 		var exactContract model.SmartContract
-		err = model.GetExactSmartContractByHash(repository.Db, &exactContract, contractHash)
+		err = model.GetSmartContractByHash(repository.Db, &exactContract, contractHash, model.EXACT_MATCH)
 		log.Println("Result get exact contract by hash: ", exactContract)
 		if err == nil {
 			contract.ContractVerification = model.SIMILAR_MATCH
@@ -184,11 +146,11 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			g.BindJSON(&contract)
 			err = model.UpdateSmartContract(repository.Db, &contract)
 			if err != nil {
-				_ = service.RemoveTempDir(dir)
+				_ = util.RemoveTempDir(dir)
 				log.Println("Error update smart contract: " + err.Error())
 				return
 			}
-			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
+			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
 			return
 		}
 	}
@@ -202,37 +164,16 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	} else {
 		contractDir = ""
 	}
-	log.Println("Result contract dir: ", contractDir)
 	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerVersion, config.RPC, request.WasmFile, contractDir, strconv.Itoa(contract.CodeId))
 
 	if verify {
 		fmt.Println("Verify smart contract successful")
-		session := g.MustGet("session").(*session.Session)
-		uploader := s3manager.NewUploader(session)
-
-		fileName := "code_id_" + strconv.Itoa(contract.CodeId) + ".zip"
-		file, err := ioutil.ReadFile(dir + "/" + fileName)
-		if err != nil {
-			_ = service.RemoveTempDir(dir)
-			log.Println("Error read source code zip file: " + err.Error())
-			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
-			return
-		}
 
 		//upload to the s3 bucket
-		up, err := uploader.Upload(&s3manager.UploadInput{
-			Bucket: aws.String(config.BUCKET_NAME),
-			Key:    aws.String(config.AWS_FOLDER + fileName),
-			Body:   bytes.NewBuffer(file),
-		})
-
-		if err != nil {
-			_ = service.RemoveTempDir(dir)
-			log.Println("Error upload contract code to S3: " + err.Error())
-			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+		s3Location := util.UploadContractToS3(g, contract, ctx, redisClient, dir, request.ContractAddress)
+		if s3Location == "" {
 			return
 		}
-		log.Println("Upload contract code to S3 successful: ", up)
 
 		schemaDir := dir + "/" + contractFolder
 		match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion)
@@ -241,12 +182,11 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + exactContractFolder
 		}
 		schemaDir = schemaDir + config.SCHEMA_DIR
-		log.Println("Schema dir: ", schemaDir)
 		files, err := ioutil.ReadDir(schemaDir)
 		if err != nil {
-			_ = service.RemoveTempDir(dir)
+			_ = util.RemoveTempDir(dir)
 			log.Println("Error read schema dir: " + err.Error())
-			PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 			return
 		}
 
@@ -257,9 +197,9 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			schemaFile := schemaDir + file.Name()
 			data, err := ioutil.ReadFile(schemaFile)
 			if err != nil {
-				_ = service.RemoveTempDir(dir)
+				_ = util.RemoveTempDir(dir)
 				log.Println("Error read schema file: " + err.Error())
-				PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+				util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
 				return
 			}
 
@@ -286,19 +226,19 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contract.InstantiateMsgSchema = instantiateSchema
 		contract.QueryMsgSchema = querySchema
 		contract.ExecuteMsgSchema = executeSchema
-		contract.S3Location = up.Location
+		contract.S3Location = s3Location
 
 		g.BindJSON(&contract)
 		err = model.UpdateSmartContract(repository.Db, &contract)
 		if err != nil {
-			_ = service.RemoveTempDir(dir)
+			_ = util.RemoveTempDir(dir)
 			log.Println("Error update smart contract: " + err.Error())
 			return
 		}
 
 		if contract.ContractVerification == model.EXACT_MATCH {
 			var unverifiedContract []model.SmartContract
-			err = model.GetUnverifiedSmartContractByHash(repository.Db, &unverifiedContract, contract.ContractHash)
+			err = model.GetSmartContractByHash(repository.Db, &unverifiedContract, contract.ContractHash, model.UNVERIFIED)
 			for i := 0; i < len(unverifiedContract); i++ {
 				unverifiedContract[i].ContractMatch = contract.ContractAddress
 				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
@@ -310,39 +250,22 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			}
 
 			g.BindJSON(&unverifiedContract)
-			err = model.UpdateMultipleSmartContract(repository.Db, &unverifiedContract)
+			err = model.UpdateSmartContract(repository.Db, &unverifiedContract)
 			if err != nil {
-				_ = service.RemoveTempDir(dir)
+				_ = util.RemoveTempDir(dir)
 				log.Println("Error update similar contract: " + err.Error())
 				return
 			}
 		}
-		PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
+		util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
 	} else {
-		PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, false)
+		util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, false)
 	}
 	redisClient.Close()
 
-	err = service.RemoveTempDir(dir)
+	err = util.RemoveTempDir(dir)
 	if err != nil {
 		log.Println("Error remove temp dir: " + err.Error())
-		return
-	}
-}
-
-func PublishRedisMessage(ctx context.Context, redisClient *redis.Client, contractAddress string, redisChannel string, dir string, verified bool) {
-	result := model.RedisResponse{
-		ContractAddress: contractAddress,
-		Verified:        verified,
-	}
-	res, _ := json.Marshal(result)
-
-	err := redisClient.Publish(ctx, redisChannel, string(res)).Err()
-	if err != nil {
-		if dir != "" {
-			_ = service.RemoveTempDir(dir)
-		}
-		log.Println("Error publish to redis: " + err.Error())
 		return
 	}
 }

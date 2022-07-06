@@ -1,10 +1,9 @@
-package database
+package cloud
 
 import (
 	"smart-contract-verify/util"
 
 	"fmt"
-	"log"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -19,10 +18,7 @@ func InitDb() *gorm.DB {
 
 func connectDB() *gorm.DB {
 	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Fatal("Cannot load config:", err)
-	}
+	config, _ := util.LoadConfig(".")
 
 	dsn := config.DB_USER + ":" + config.DB_PASS + "@tcp" + "(" + config.DB_HOST + ":" + config.DB_PORT + ")/" + config.DB_NAME + "?" + "parseTime=true&loc=UTC"
 
