@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"smart-contract-verify/database"
 	"smart-contract-verify/model"
 	"smart-contract-verify/service"
@@ -194,11 +195,14 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 	fmt.Println("Start verifying smart contract source code")
 	var contractDir string
-	if request.ContractDir != "" {
-		contractDir = string(request.ContractDir[1:len(request.ContractDir)])
+	match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion)
+	if match {
+		exactContractFolder := strings.ReplaceAll(strings.Split(request.WasmFile, ".")[0], "_", "-")
+		contractDir = config.WORKSPACE_DIR + exactContractFolder
 	} else {
-		contractDir = request.ContractDir
+		contractDir = ""
 	}
+	log.Println("Result contract dir: ", contractDir)
 	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerVersion, config.RPC, request.WasmFile, contractDir, strconv.Itoa(contract.CodeId))
 
 	if verify {
@@ -231,10 +235,13 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		log.Println("Upload contract code to S3 successful: ", up)
 
 		schemaDir := dir + "/" + contractFolder
-		if request.ContractDir != "" {
-			schemaDir = schemaDir + request.ContractDir
+		match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion)
+		if match {
+			exactContractFolder := strings.ReplaceAll(strings.Split(request.WasmFile, ".")[0], "_", "-")
+			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + exactContractFolder
 		}
 		schemaDir = schemaDir + config.SCHEMA_DIR
+		log.Println("Schema dir: ", schemaDir)
 		files, err := ioutil.ReadDir(schemaDir)
 		if err != nil {
 			_ = service.RemoveTempDir(dir)
