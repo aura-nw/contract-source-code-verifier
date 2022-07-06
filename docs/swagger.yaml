@@ -56,21 +56,6 @@ paths:
       summary: Get the hash of a deployed contract
       tags:
       - smart-contract
-  /smart-contract/test-upload-s3:
-    post:
-      consumes:
-      - application/json
-      description: Upload S3
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.JsonResponse'
-      summary: Test upload S3
-      tags:
-      - smart-contract
   /smart-contract/verify:
     post:
       consumes:
