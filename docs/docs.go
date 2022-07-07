@@ -115,9 +115,6 @@ const docTemplate = `{
                 "contractAddress": {
                     "type": "string"
                 },
-                "contractDir": {
-                    "type": "string"
-                },
                 "contractUrl": {
                     "type": "string"
                 },

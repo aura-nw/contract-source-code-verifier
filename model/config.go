@@ -11,6 +11,7 @@ type Config struct {
 
 	SCHEMA_DIR      string `mapstructure:"SCHEMA_DIR"`
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
+	WORKSPACE_DIR   string `mapstructure:"WORKSPACE_DIR"`
 
 	SERVER string `mapstructure:"SERVER"`
 
@@ -23,4 +24,6 @@ type Config struct {
 	AWS_SECRET_ACCESS_KEY string `mapstructure:"AWS_SECRET_ACCESS_KEY"`
 	BUCKET_NAME           string `mapstructure:"BUCKET_NAME"`
 	AWS_FOLDER            string `mapstructure:"AWS_FOLDER"`
+
+	WORKSPACE_REGEX string `mapstructure:"WORKSPACE_REGEX"`
 }
