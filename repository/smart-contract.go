@@ -104,8 +104,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	_ = redisClient.Set(ctx, request.ContractAddress, "Verifying", 0).Err()
 
 	var contract model.SmartContract
-	err := model.GetSmartContract(repository.Db, &contract, request.ContractAddress)
-	if err != nil {
+	if err := model.GetSmartContract(repository.Db, &contract, request.ContractAddress); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Println("Contract address not found")
 			return
@@ -130,9 +129,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		_ = util.RemoveTempDir(dir)
 
 		var exactContract model.SmartContract
-		err = model.GetSmartContractByHash(repository.Db, &exactContract, contractHash, model.EXACT_MATCH)
-		log.Println("Result get exact contract by hash: ", exactContract)
-		if err == nil {
+		if err := model.GetSmartContractByHash(repository.Db, &exactContract, contractHash, model.EXACT_MATCH); err == nil {
 			contract.ContractVerification = model.SIMILAR_MATCH
 			contract.ContractMatch = exactContract.ContractAddress
 			contract.ContractHash = exactContract.ContractHash
@@ -144,8 +141,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			contract.S3Location = exactContract.S3Location
 
 			g.BindJSON(&contract)
-			err = model.UpdateSmartContract(repository.Db, &contract)
-			if err != nil {
+			if err = model.UpdateSmartContract(repository.Db, &contract); err != nil {
 				_ = util.RemoveTempDir(dir)
 				log.Println("Error update smart contract: " + err.Error())
 				return
@@ -153,12 +149,12 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
 			return
 		}
+		log.Println("Result get exact contract by hash: ", exactContract)
 	}
 
 	fmt.Println("Start verifying smart contract source code")
 	var contractDir string
-	match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion)
-	if match {
+	if match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion); match {
 		exactContractFolder := strings.ReplaceAll(strings.Split(request.WasmFile, ".")[0], "_", "-")
 		contractDir = config.WORKSPACE_DIR + exactContractFolder
 	} else {
@@ -176,8 +172,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		}
 
 		schemaDir := dir + "/" + contractFolder
-		match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion)
-		if match {
+		if match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion); match {
 			exactContractFolder := strings.ReplaceAll(strings.Split(request.WasmFile, ".")[0], "_", "-")
 			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + exactContractFolder
 		}
@@ -203,11 +198,12 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				return
 			}
 
-			if file.Name() == InstantiateMsg {
+			switch file.Name() {
+			case InstantiateMsg:
 				instantiateSchema = string(data)
-			} else if file.Name() == QueryMsg {
+			case QueryMsg:
 				querySchema = string(data)
-			} else if file.Name() == ExecuteMsg || file.Name() == CW20ExecuteMsg {
+			case ExecuteMsg, CW20ExecuteMsg:
 				executeSchema = string(data)
 			}
 		}
@@ -229,8 +225,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contract.S3Location = s3Location
 
 		g.BindJSON(&contract)
-		err = model.UpdateSmartContract(repository.Db, &contract)
-		if err != nil {
+		if err = model.UpdateSmartContract(repository.Db, &contract); err != nil {
 			_ = util.RemoveTempDir(dir)
 			log.Println("Error update smart contract: " + err.Error())
 			return
@@ -250,8 +245,8 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			}
 
 			g.BindJSON(&unverifiedContract)
-			err = model.UpdateSmartContract(repository.Db, &unverifiedContract)
-			if err != nil {
+
+			if err = model.UpdateSmartContract(repository.Db, &unverifiedContract); err != nil {
 				_ = util.RemoveTempDir(dir)
 				log.Println("Error update similar contract: " + err.Error())
 				return
@@ -263,9 +258,5 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	}
 	redisClient.Close()
 
-	err = util.RemoveTempDir(dir)
-	if err != nil {
-		log.Println("Error remove temp dir: " + err.Error())
-		return
-	}
+	_ = util.RemoveTempDir(dir)
 }
