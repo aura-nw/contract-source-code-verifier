@@ -15,8 +15,6 @@ definitions:
         type: string
       contractAddress:
         type: string
-      contractDir:
-        type: string
       contractUrl:
         type: string
       wasmFile:

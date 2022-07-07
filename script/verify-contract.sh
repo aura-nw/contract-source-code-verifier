@@ -12,7 +12,6 @@ CODE_ID="${10}"
 
 cd $DIR
 git clone $SOURCE_URL
-chmod -R 777 $CONTRACT_FOLDER
 cd $CONTRACT_FOLDER
 git checkout $COMMIT
 rm -rf artifacts
@@ -26,6 +25,7 @@ CARGO_CHECKSUM=$(sha256sum artifacts/$WASM_FILE | awk '{print $1}')
 echo $CARGO_CHECKSUM
 
 if [ "$CARGO_CHECKSUM" == "$EXPECTED_CHECKSUM" ]; then
+    pwd
     if [ "$CONTRACT_DIR" != "" ]; then 
         cd $CONTRACT_DIR
     fi

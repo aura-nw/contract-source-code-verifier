@@ -2,19 +2,16 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
-	"math/rand"
 	"os/exec"
 	"smart-contract-verify/model"
 	"smart-contract-verify/util"
 	"strings"
-	"time"
 
 	"log"
 )
 
 func GetContractId(contractAddress string, rpc string) string {
-	out, err := exec.Command("aurad", "query", "wasm", "contract", contractAddress, "--node", rpc, "--output", "json").CombinedOutput() // , "| jq"
+	out, err := exec.Command("aurad", "query", "wasm", "contract", contractAddress, "--node", rpc, "--output", "json").CombinedOutput()
 	if err != nil {
 		return ""
 	}
@@ -28,21 +25,13 @@ func GetContractId(contractAddress string, rpc string) string {
 
 func GetContractHash(contractId string, rpc string) (string, string) {
 	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
+	config, _ := util.LoadConfig(".")
 
-	dir, out, err := MakeTempDir()
-	if err != nil {
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error create dir to store code: " + err.Error())
-		return "", ""
-	}
+	dir, out := util.MakeTempDir()
 
-	out, err = exec.Command("aurad", "query", "wasm", "code", contractId, dir+config.UPLOAD_CONTRACT, "--node", rpc).CombinedOutput()
+	out, err := exec.Command("aurad", "query", "wasm", "code", contractId, dir+config.UPLOAD_CONTRACT, "--node", rpc).CombinedOutput()
 	if err != nil {
-		_ = RemoveTempDir(dir)
+		_ = util.RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error download contract: " + err.Error())
 		return "", ""
@@ -51,7 +40,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 
 	out, err = exec.Command("sha256sum", dir+config.UPLOAD_CONTRACT).CombinedOutput()
 	if err != nil {
-		_ = RemoveTempDir(dir)
+		_ = util.RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error get contract hash: " + err.Error())
 		return "", ""
@@ -65,31 +54,16 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerVersion string, rpc string, wasmFile string, contractDir string, codeId string) (bool, string, string) {
 	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
 
-	dir, out, err := MakeTempDir()
-	log.Println("Create dir successful: ", dir)
+	dir, out := util.MakeTempDir()
 	tempDir := strings.Split(dir, "/")[len(strings.Split(dir, "/"))-1]
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion, wasmFile, contractDir, tempDir, codeId).CombinedOutput()
+	out, err := exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion, wasmFile, contractDir, tempDir, codeId).CombinedOutput()
 	if err != nil {
-		_ = RemoveTempDir(dir)
+		_ = util.RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error verify smart contract code: " + err.Error())
 		return false, dir, contractFolder
 	}
 	log.Println("Result VerifyContractCode: " + string(out))
 	return true, dir, contractFolder
-}
-
-func RemoveTempDir(dir string) error {
-	_, err := exec.Command("rm", "-rf", dir).CombinedOutput()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func MakeTempDir() (string, []byte, error) {
-	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix()) + fmt.Sprint(rand.Int())
-	out, err := exec.Command("mkdir", dir).CombinedOutput()
-	return dir, out, err
 }
