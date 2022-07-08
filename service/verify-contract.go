@@ -51,19 +51,69 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerVersion string, rpc string, wasmFile string, contractDir string, codeId string) (bool, string, string) {
-	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
+func VerifyContractCode(request model.VerifyContractRequest, contractHash string, contractDir string, codeId string) (bool, string, string) {
+	// Load config
+	config, _ := util.LoadConfig(".")
+
+	contractFolder := request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : len([]rune(request.ContractUrl))]
 
 	dir, out := util.MakeTempDir()
-	tempDir := strings.Split(dir, "/")[len(strings.Split(dir, "/"))-1]
+	// tempDir := strings.Split(dir, "/")[len(strings.Split(dir, "/"))-1]
+	artifactsWasm := dir + "/" + contractFolder
+	// if contractDir != "" {
+	// 	artifactsWasm = artifactsWasm + "/" + contractDir
+	// }
+	artifactsWasm = artifactsWasm + config.ARTIFACTS + request.WasmFile
 
-	out, err := exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion, wasmFile, contractDir, tempDir, codeId).CombinedOutput()
+	pwd, _ := exec.Command("pwd").CombinedOutput()
+
+	// Clone and check out commit of contract
+	util.CloneAndCheckOutContract(dir+"/"+contractFolder, request.ContractUrl, request.Commit)
+
+	// Compile contract
+	compiled := util.CompileSourceCode(request.CompilerVersion, strings.TrimSuffix(string(pwd), "\n")+"/"+dir+"/"+contractFolder, contractFolder+"_cache")
+	if !compiled {
+		return false, dir, contractFolder
+	}
+
+	codeHash, err := exec.Command("sha256sum", artifactsWasm).CombinedOutput()
+	if err != nil {
+		_ = util.RemoveTempDir(dir)
+		log.Println("Execute command error: " + string(codeHash))
+		log.Println("Error get contract hash: " + err.Error())
+		return false, dir, contractFolder
+	}
+	log.Println("Result GetContractHash: " + string(codeHash))
+
+	if strings.Split(string(codeHash), " ")[0] != contractHash {
+		_ = util.RemoveTempDir(dir)
+		return false, dir, contractFolder
+	}
+
+	out, err = exec.Command("sh", "-c", "cd "+dir+"/"+contractFolder+"/"+contractDir+" && cargo clean && cargo schema").CombinedOutput()
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
-		log.Println("Error verify smart contract code: " + err.Error())
+		log.Println("Error generate schema files: " + err.Error())
 		return false, dir, contractFolder
 	}
-	log.Println("Result VerifyContractCode: " + string(out))
+	log.Println("Result generate schema files: " + string(out))
+
+	cmd := exec.Command("sh", "-c", "cd "+dir+" && zip -r "+config.ZIP_PREFIX+codeId+".zip "+contractFolder)
+	err = cmd.Run()
+	if err != nil {
+		_ = util.RemoveTempDir(dir)
+		log.Println("Error zip contract: " + err.Error())
+		return false, dir, contractFolder
+	}
+
+	// out, err := exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion, wasmFile, contractDir, tempDir, codeId).CombinedOutput()
+	// if err != nil {
+	// 	_ = util.RemoveTempDir(dir)
+	// 	log.Println("Execute command error: " + string(out))
+	// 	log.Println("Error verify smart contract code: " + err.Error())
+	// 	return false, dir, contractFolder
+	// }
+	// log.Println("Result VerifyContractCode: " + string(out))
 	return true, dir, contractFolder
 }

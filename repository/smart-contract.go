@@ -140,6 +140,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			contract.CompilerVersion = exactContract.CompilerVersion
 			contract.S3Location = exactContract.S3Location
 
+			log.Println("Contract updated as similar: ", contract)
 			g.BindJSON(&contract)
 			if err = model.UpdateSmartContract(repository.Db, &contract); err != nil {
 				_ = util.RemoveTempDir(dir)
@@ -160,7 +161,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	} else {
 		contractDir = ""
 	}
-	verify, dir, contractFolder := service.VerifyContractCode(request.ContractUrl, request.Commit, contractHash, request.CompilerVersion, config.RPC, request.WasmFile, contractDir, strconv.Itoa(contract.CodeId))
+	verify, dir, contractFolder := service.VerifyContractCode(request, contractHash, contractDir, strconv.Itoa(contract.CodeId))
 
 	if verify {
 		fmt.Println("Verify smart contract successful")
@@ -224,6 +225,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contract.ExecuteMsgSchema = executeSchema
 		contract.S3Location = s3Location
 
+		log.Println("Contract updated after verifying: ", contract)
 		g.BindJSON(&contract)
 		if err = model.UpdateSmartContract(repository.Db, &contract); err != nil {
 			_ = util.RemoveTempDir(dir)
