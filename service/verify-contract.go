@@ -2,19 +2,17 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
-	"math/rand"
 	"os/exec"
 	"smart-contract-verify/model"
 	"smart-contract-verify/util"
 	"strings"
-	"time"
 
 	"log"
 )
 
 func GetContractId(contractAddress string, rpc string) string {
-	out, err := exec.Command("aurad", "query", "wasm", "contract", contractAddress, "--node", rpc, "--output", "json").CombinedOutput() // , "| jq"
+	// Get contract id based on contract address
+	out, err := exec.Command("aurad", "query", "wasm", "contract", contractAddress, "--node", rpc, "--output", "json").CombinedOutput()
 	if err != nil {
 		return ""
 	}
@@ -28,30 +26,24 @@ func GetContractId(contractAddress string, rpc string) string {
 
 func GetContractHash(contractId string, rpc string) (string, string) {
 	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
+	config, _ := util.LoadConfig(".")
 
-	dir, out, err := MakeTempDir()
-	if err != nil {
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error create dir to store code: " + err.Error())
-		return "", ""
-	}
+	dir, out := util.MakeTempDir()
 
-	out, err = exec.Command("aurad", "query", "wasm", "code", contractId, dir+config.UPLOAD_CONTRACT, "--node", rpc).CombinedOutput()
+	// Get uploaded wasm file based on code id
+	out, err := exec.Command("aurad", "query", "wasm", "code", contractId, dir+config.UPLOAD_CONTRACT, "--node", rpc).CombinedOutput()
 	if err != nil {
-		_ = RemoveTempDir(dir)
+		_ = util.RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error download contract: " + err.Error())
 		return "", ""
 	}
 	log.Println("Result call contract with ID: " + string(out))
 
+	// Generate contract hash
 	out, err = exec.Command("sha256sum", dir+config.UPLOAD_CONTRACT).CombinedOutput()
 	if err != nil {
-		_ = RemoveTempDir(dir)
+		_ = util.RemoveTempDir(dir)
 		log.Println("Execute command error: " + string(out))
 		log.Println("Error get contract hash: " + err.Error())
 		return "", ""
@@ -62,34 +54,61 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(contractUrl string, commit string, contractHash string, compilerVersion string, rpc string, wasmFile string, contractDir string, codeId string) (bool, string, string) {
-	contractFolder := contractUrl[strings.LastIndex(contractUrl, "/")+1 : len([]rune(contractUrl))]
+func VerifyContractCode(request model.VerifyContractRequest, contractHash string, contractDir string, codeId string) (bool, string, string) {
+	// Load config
+	config, _ := util.LoadConfig(".")
 
-	dir, out, err := MakeTempDir()
-	log.Println("Create dir successful: ", dir)
-	tempDir := strings.Split(dir, "/")[len(strings.Split(dir, "/"))-1]
+	contractFolder := request.ContractUrl[strings.LastIndex(request.ContractUrl, "/")+1 : len([]rune(request.ContractUrl))]
 
-	out, err = exec.Command("/bin/bash", "./script/verify-contract.sh", contractUrl, commit, contractHash, dir, contractFolder, compilerVersion, wasmFile, contractDir, tempDir, codeId).CombinedOutput()
-	if err != nil {
-		_ = RemoveTempDir(dir)
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error verify smart contract code: " + err.Error())
+	dir, out := util.MakeTempDir()
+	artifactsWasm := dir + "/" + contractFolder
+	artifactsWasm = artifactsWasm + config.ARTIFACTS + request.WasmFile
+
+	pwd, _ := exec.Command("pwd").CombinedOutput()
+
+	// Clone and check out commit of contract
+	util.CloneAndCheckOutContract(dir+"/"+contractFolder, request.ContractUrl, request.Commit)
+
+	// Compile contract
+	compiled := util.CompileSourceCode(request.CompilerVersion, strings.TrimSuffix(string(pwd), "\n")+"/"+dir+"/"+contractFolder, contractFolder+"_cache")
+	if !compiled {
 		return false, dir, contractFolder
 	}
-	log.Println("Result VerifyContractCode: " + string(out))
-	return true, dir, contractFolder
-}
 
-func RemoveTempDir(dir string) error {
-	_, err := exec.Command("rm", "-rf", dir).CombinedOutput()
+	// Get hash of compiled wasm file
+	codeHash, err := exec.Command("sha256sum", artifactsWasm).CombinedOutput()
 	if err != nil {
-		return err
+		_ = util.RemoveTempDir(dir)
+		log.Println("Execute command error: " + string(codeHash))
+		log.Println("Error get contract hash: " + err.Error())
+		return false, dir, contractFolder
 	}
-	return nil
-}
+	log.Println("Result GetContractHash: " + string(codeHash))
 
-func MakeTempDir() (string, []byte, error) {
-	dir := "temp/tempdir" + fmt.Sprint(time.Now().Unix()) + fmt.Sprint(rand.Int())
-	out, err := exec.Command("mkdir", dir).CombinedOutput()
-	return dir, out, err
+	// Check if hashes are match
+	if strings.Split(string(codeHash), " ")[0] != contractHash {
+		_ = util.RemoveTempDir(dir)
+		return false, dir, contractFolder
+	}
+
+	// Generate schema file
+	out, err = exec.Command("sh", "-c", "cd "+dir+"/"+contractFolder+"/"+contractDir+" && cargo clean && cargo schema").CombinedOutput()
+	if err != nil {
+		_ = util.RemoveTempDir(dir)
+		log.Println("Execute command error: " + string(out))
+		log.Println("Error generate schema files: " + err.Error())
+		return false, dir, contractFolder
+	}
+	log.Println("Result generate schema files: " + string(out))
+
+	// Zip contract source code
+	cmd := exec.Command("sh", "-c", "cd "+dir+" && zip -r "+config.ZIP_PREFIX+codeId+"_"+request.ContractAddress+".zip "+contractFolder)
+	err = cmd.Run()
+	if err != nil {
+		_ = util.RemoveTempDir(dir)
+		log.Println("Error zip contract: " + err.Error())
+		return false, dir, contractFolder
+	}
+
+	return true, dir, contractFolder
 }

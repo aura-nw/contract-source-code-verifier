@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "verify-job.dev.aura.network",
     "basePath": "/",
     "paths": {
         "/smart-contract/get-hash/{contractId}": {
@@ -39,29 +39,6 @@
                         "required": true
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.JsonResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/smart-contract/test-upload-s3": {
-            "post": {
-                "description": "Upload S3",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "smart-contract"
-                ],
-                "summary": "Test upload S3",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -129,9 +106,6 @@
                     "type": "string"
                 },
                 "contractAddress": {
-                    "type": "string"
-                },
-                "contractDir": {
                     "type": "string"
                 },
                 "contractUrl": {
