@@ -101,6 +101,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	// Initialize redis	client
 	redisClient, ctx := cloud.ConnectRedis()
 
+	// Set verify status for current contract
 	_ = redisClient.Set(ctx, request.ContractAddress, "Verifying", 0).Err()
 
 	var contract model.SmartContract
