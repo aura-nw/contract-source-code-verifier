@@ -6,9 +6,10 @@ type JsonResponse struct {
 }
 
 type RedisResponse struct {
+	Code            string
+	Message         string
 	ContractAddress string
 	Verified        bool
-	Message         string
 }
 
 const (
@@ -23,6 +24,7 @@ const (
 	CANT_READ_ZIP                     = "E007"
 	UPLOAD_S3_FAILED                  = "E008"
 	READ_SCHEMA_FILE_ERROR            = "E009"
+	SOURCE_CODE_INCORRECT             = "E010"
 )
 
 var ResponseMessage = map[string]string{
@@ -37,6 +39,7 @@ var ResponseMessage = map[string]string{
 	CANT_READ_ZIP:              "Cannot read zip file",
 	UPLOAD_S3_FAILED:           "Cannot upload contract code to S3",
 	READ_SCHEMA_FILE_ERROR:     "Error read schema file",
+	SOURCE_CODE_INCORRECT:      "Smart contract source code is incorrect",
 }
 
 const (
