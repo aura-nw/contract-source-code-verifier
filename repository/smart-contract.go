@@ -122,7 +122,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		hash, dir := service.GetContractHash(strconv.Itoa(contract.CodeId), config.RPC)
 		if hash == "" {
 			log.Println("Cannot get contract hash")
-			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false, model.ERROR_GET_HASH, model.ResponseMessage[model.ERROR_GET_HASH])
 			return
 		}
 		log.Println("Result get contract hash: ", hash)
@@ -148,7 +148,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				log.Println("Error update smart contract: " + err.Error())
 				return
 			}
-			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
+			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true, model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 			return
 		}
 		log.Println("Result get exact contract by hash: ", exactContract)
@@ -183,7 +183,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		if err != nil {
 			_ = util.RemoveTempDir(dir)
 			log.Println("Error read schema dir: " + err.Error())
-			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+			util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false, model.READ_SCHEMA_ERROR, model.ResponseMessage[model.READ_SCHEMA_ERROR])
 			return
 		}
 
@@ -196,7 +196,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			if err != nil {
 				_ = util.RemoveTempDir(dir)
 				log.Println("Error read schema file: " + err.Error())
-				util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false)
+				util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, "", false, model.READ_SCHEMA_FILE_ERROR, model.ResponseMessage[model.READ_SCHEMA_FILE_ERROR])
 				return
 			}
 
@@ -255,9 +255,9 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				return
 			}
 		}
-		util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true)
+		util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, true, model.SUCCESSFUL, model.ResponseMessage[model.SUCCESSFUL])
 	} else {
-		util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, false)
+		util.PublishRedisMessage(ctx, redisClient, request.ContractAddress, config.REDIS_CHANNEL, dir, false, model.SOURCE_CODE_INCORRECT, model.ResponseMessage[model.SOURCE_CODE_INCORRECT])
 	}
 	redisClient.Close()
 
