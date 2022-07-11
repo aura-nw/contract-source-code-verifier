@@ -7,14 +7,16 @@ This application provide API for Explorer app to verify if a smart contract sour
 This project is built following the flow of verifying a smart contract of [CosmWasm documentation](https://docs.cosmwasm.com/docs/1.0/smart-contracts/verify/).
 
 ## Repo Structure
--   `/database`: Create connection to MySQL Database
+-   `/cloud`: Create connection to MySQL Database, S3 service and initialize redis client
 -   `/docs`: Contains swagger documents
 -   `/model`: Contains smart contract entity, request model, config, etc.
 -   `/repository`: Contains services to query data from and update data to DB
 -   `/script`: Contains shell script file to process verification step
 -   `/service`: Contains functions to query data onchain through CLI commands
 -   `/util`: Contains common functions
--   `/aws`: Create connection to AWS S3 Service
+
+## Main Flow
+![image](docs/images/verify-contract-main-flow.png)
 
 ## Prerequisite
 ### Go

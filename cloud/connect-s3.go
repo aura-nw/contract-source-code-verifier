@@ -1,4 +1,4 @@
-package aws
+package cloud
 
 import (
 	"log"
@@ -11,10 +11,7 @@ import (
 
 func ConnectS3() *session.Session {
 	// Load config
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Panic("Cannot load config:", err)
-	}
+	config, _ := util.LoadConfig(".")
 
 	sess, err := session.NewSession(
 		&aws.Config{
