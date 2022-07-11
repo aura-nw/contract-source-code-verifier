@@ -102,7 +102,7 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 	log.Println("Result generate schema files: " + string(out))
 
 	// Zip contract source code
-	cmd := exec.Command("sh", "-c", "cd "+dir+" && zip -r "+config.ZIP_PREFIX+codeId+".zip "+contractFolder)
+	cmd := exec.Command("sh", "-c", "cd "+dir+" && zip -r "+config.ZIP_PREFIX+codeId+"_"+request.ContractAddress+".zip "+contractFolder)
 	err = cmd.Run()
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
