@@ -34,8 +34,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	out, err := exec.Command("aurad", "query", "wasm", "code", contractId, dir+config.UPLOAD_CONTRACT, "--node", rpc).CombinedOutput()
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error download contract: " + err.Error())
+		log.Println("Error download contract: " + string(out))
 		return "", ""
 	}
 	log.Println("Result call contract with ID: " + string(out))
@@ -44,8 +43,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	out, err = exec.Command("sha256sum", dir+config.UPLOAD_CONTRACT).CombinedOutput()
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error get contract hash: " + err.Error())
+		log.Println("Error get contract hash: " + string(out))
 		return "", ""
 	}
 	log.Println("Result GetContractHash: " + string(out))
@@ -54,7 +52,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 	return hash, dir
 }
 
-func VerifyContractCode(request model.VerifyContractRequest, contractHash string, contractDir string, codeId string) (bool, string, string) {
+func VerifyContractCode(request model.VerifyContractRequest, contractHash string, contractDir string, codeId string) (string, string, string) {
 	// Load config
 	config, _ := util.LoadConfig(".")
 
@@ -72,32 +70,30 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 	// Compile contract
 	compiled := util.CompileSourceCode(request.CompilerVersion, strings.TrimSuffix(string(pwd), "\n")+"/"+dir+"/"+contractFolder, contractFolder+"_cache")
 	if !compiled {
-		return false, dir, contractFolder
+		return model.SOURCE_CODE_INCORRECT, dir, contractFolder
 	}
 
 	// Get hash of compiled wasm file
 	codeHash, err := exec.Command("sha256sum", artifactsWasm).CombinedOutput()
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
-		log.Println("Execute command error: " + string(codeHash))
-		log.Println("Error get contract hash: " + err.Error())
-		return false, dir, contractFolder
+		log.Println("Error get contract hash: " + string(codeHash))
+		return model.WASM_FILE_INCORRECT, dir, contractFolder
 	}
 	log.Println("Result GetContractHash: " + string(codeHash))
 
 	// Check if hashes are match
 	if strings.Split(string(codeHash), " ")[0] != contractHash {
 		_ = util.RemoveTempDir(dir)
-		return false, dir, contractFolder
+		return model.SOURCE_CODE_INCORRECT, dir, contractFolder
 	}
 
 	// Generate schema file
 	out, err = exec.Command("sh", "-c", "cd "+dir+"/"+contractFolder+"/"+contractDir+" && cargo clean && cargo schema").CombinedOutput()
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
-		log.Println("Execute command error: " + string(out))
-		log.Println("Error generate schema files: " + err.Error())
-		return false, dir, contractFolder
+		log.Println("Error generate schema files: " + string(out))
+		return model.CANT_GENERATE_SCHEMA, dir, contractFolder
 	}
 	log.Println("Result generate schema files: " + string(out))
 
@@ -107,8 +103,8 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 	if err != nil {
 		_ = util.RemoveTempDir(dir)
 		log.Println("Error zip contract: " + err.Error())
-		return false, dir, contractFolder
+		return model.CANT_CREATE_ZIP, dir, contractFolder
 	}
 
-	return true, dir, contractFolder
+	return model.SUCCESSFUL, dir, contractFolder
 }
