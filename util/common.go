@@ -44,10 +44,11 @@ func MakeTempDir() (string, []byte) {
 	return dir, out
 }
 
-func PublishRedisMessage(ctx context.Context, redisClient *redis.Client, contractAddress string, redisChannel string, dir string, verified bool) {
+func PublishRedisMessage(ctx context.Context, redisClient *redis.Client, contractAddress string, redisChannel string, dir string, verified bool, message string) {
 	result := model.RedisResponse{
 		ContractAddress: contractAddress,
 		Verified:        verified,
+		Message:         message,
 	}
 	res, _ := json.Marshal(result)
 
@@ -73,7 +74,7 @@ func UploadContractToS3(g *gin.Context, contract model.SmartContract, ctx contex
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Error read source code zip file: " + err.Error())
-		PublishRedisMessage(ctx, redisClient, contractAddress, config.REDIS_CHANNEL, "", false)
+		PublishRedisMessage(ctx, redisClient, contractAddress, config.REDIS_CHANNEL, "", false, model.ResponseMessage[model.CANT_READ_ZIP])
 		return ""
 	}
 
@@ -86,7 +87,7 @@ func UploadContractToS3(g *gin.Context, contract model.SmartContract, ctx contex
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Error upload contract code to S3: " + err.Error())
-		PublishRedisMessage(ctx, redisClient, contractAddress, config.REDIS_CHANNEL, "", false)
+		PublishRedisMessage(ctx, redisClient, contractAddress, config.REDIS_CHANNEL, "", false, model.ResponseMessage[model.UPLOAD_S3_FAILED])
 		return ""
 	}
 	log.Println("Upload contract code to S3 successful: ", up)
