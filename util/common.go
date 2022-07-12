@@ -75,7 +75,15 @@ func UploadContractToS3(g *gin.Context, contract model.SmartContract, ctx contex
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Error read source code zip file: " + err.Error())
-		PublishRedisMessage(ctx, redisClient, contractAddress, config.REDIS_CHANNEL, dir, false, model.INTERNAL_ERROR, model.ResponseMessage[model.INTERNAL_ERROR])
+		PublishRedisMessage(
+			ctx,
+			redisClient,
+			contractAddress,
+			config.REDIS_CHANNEL,
+			dir,
+			false,
+			model.INTERNAL_ERROR,
+			model.ResponseMessage[model.INTERNAL_ERROR])
 		return ""
 	}
 
@@ -88,7 +96,15 @@ func UploadContractToS3(g *gin.Context, contract model.SmartContract, ctx contex
 	if err != nil {
 		_ = RemoveTempDir(dir)
 		log.Println("Error upload contract code to S3: " + err.Error())
-		PublishRedisMessage(ctx, redisClient, contractAddress, config.REDIS_CHANNEL, dir, false, model.INTERNAL_ERROR, model.ResponseMessage[model.INTERNAL_ERROR])
+		PublishRedisMessage(
+			ctx,
+			redisClient,
+			contractAddress,
+			config.REDIS_CHANNEL,
+			dir,
+			false,
+			model.INTERNAL_ERROR,
+			model.ResponseMessage[model.INTERNAL_ERROR])
 		return ""
 	}
 	log.Println("Upload contract code to S3 successful: ", up)
