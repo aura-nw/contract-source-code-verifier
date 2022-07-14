@@ -12,6 +12,7 @@ type Config struct {
 	SCHEMA_DIR      string `mapstructure:"SCHEMA_DIR"`
 	UPLOAD_CONTRACT string `mapstructure:"UPLOAD_CONTRACT"`
 	WORKSPACE_DIR   string `mapstructure:"WORKSPACE_DIR"`
+	ARTIFACTS       string `mapstructure:"ARTIFACTS"`
 
 	SERVER string `mapstructure:"SERVER"`
 
@@ -26,4 +27,6 @@ type Config struct {
 	AWS_FOLDER            string `mapstructure:"AWS_FOLDER"`
 
 	WORKSPACE_REGEX string `mapstructure:"WORKSPACE_REGEX"`
+
+	ZIP_PREFIX string `mapstructure:"ZIP_PREFIX"`
 }
