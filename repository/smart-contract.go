@@ -318,6 +318,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				unverifiedContract[i].InstantiateMsgSchema = contract.InstantiateMsgSchema
 				unverifiedContract[i].QueryMsgSchema = contract.QueryMsgSchema
 				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
+				unverifiedContract[i].S3Location = contract.S3Location
 			}
 
 			g.BindJSON(&unverifiedContract)
