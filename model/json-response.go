@@ -31,7 +31,7 @@ var ResponseMessage = map[string]string{
 	SOURCE_CODE_INCORRECT:     "Smart contract source code or compiler version is incorrect",
 	INTERNAL_ERROR:            "Internal error",
 	SIMILAR_CONTRACT_DETECTED: "This is a similar match to contract ",
-	VERIFY_DUPLICATE_CODE:     "This contract is already being verified",
+	VERIFY_DUPLICATE_CODE:     "The code id of this contract is already being verified",
 }
 
 const (
