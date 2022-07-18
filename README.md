@@ -1,7 +1,7 @@
-# Verify Smart Contract Application
+# Contract Source Code Verifier
 
 ## Target
-This application provide API for Explorer app to verify if a smart contract source code truely belongs to a contract deployed on Network.
+This application provide API for AuraScan, an explorer site belongs to Aura Network ecosystem, to verify if a smart contract source code truely belongs to a contract deployed on Network.
 
 ## Method
 This project is built following the flow of verifying a smart contract of [CosmWasm documentation](https://docs.cosmwasm.com/docs/1.0/smart-contracts/verify/).
