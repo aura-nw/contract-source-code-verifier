@@ -221,6 +221,28 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			false,
 			model.WASM_FILE_INCORRECT,
 			model.ResponseMessage[model.WASM_FILE_INCORRECT])
+	case model.GITHUB_404:
+		log.Println("Verify smart contract failed")
+		util.PublishRedisMessage(
+			ctx,
+			redisClient,
+			request.ContractAddress,
+			config.REDIS_CHANNEL,
+			dir,
+			false,
+			model.GITHUB_404,
+			model.ResponseMessage[model.GITHUB_404])
+	case model.WRONG_COMMIT:
+		log.Println("Verify smart contract failed")
+		util.PublishRedisMessage(
+			ctx,
+			redisClient,
+			request.ContractAddress,
+			config.REDIS_CHANNEL,
+			dir,
+			false,
+			model.WRONG_COMMIT,
+			model.ResponseMessage[model.WRONG_COMMIT])
 	case model.SUCCESSFUL:
 		log.Println("Verify smart contract successful")
 
