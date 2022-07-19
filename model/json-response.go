@@ -21,6 +21,8 @@ const (
 	CANT_CREATE_ZIP                  = "E005"
 	SIMILAR_CONTRACT_DETECTED        = "E006"
 	VERIFY_DUPLICATE_CODE            = "E007"
+	GITHUB_404                       = "E008"
+	WRONG_COMMIT                     = "E009"
 )
 
 var ResponseMessage = map[string]string{
@@ -32,6 +34,8 @@ var ResponseMessage = map[string]string{
 	INTERNAL_ERROR:            "Internal error",
 	SIMILAR_CONTRACT_DETECTED: "This is a similar match to contract ",
 	VERIFY_DUPLICATE_CODE:     "The code id of this contract is already being verified",
+	GITHUB_404:                "Contract git URL not found",
+	WRONG_COMMIT:              "Commit not found",
 }
 
 const (

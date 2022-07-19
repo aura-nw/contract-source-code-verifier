@@ -65,7 +65,13 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 	pwd, _ := exec.Command("pwd").CombinedOutput()
 
 	// Clone and check out commit of contract
-	util.CloneAndCheckOutContract(dir+"/"+contractFolder, request.ContractUrl, request.Commit)
+	errorCode := util.CloneAndCheckOutContract(dir+"/"+contractFolder, request.ContractUrl, request.Commit)
+	switch errorCode {
+	case 1:
+		return model.GITHUB_404, dir, contractFolder
+	case 2:
+		return model.WRONG_COMMIT, dir, contractFolder
+	}
 
 	// Compile contract
 	compiled := util.CompileSourceCode(request.CompilerVersion, strings.TrimSuffix(string(pwd), "\n")+"/"+dir+"/"+contractFolder, contractFolder+"_cache")

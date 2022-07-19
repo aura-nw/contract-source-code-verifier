@@ -189,17 +189,23 @@ func CompileSourceCode(compilerImage string, contractDir string, contractCache s
 	return true
 }
 
-func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHash string) {
+func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHash string) int {
 	contract, err := git.PlainClone(contractDir, false, &git.CloneOptions{
 		URL:      contractUrl,
 		Progress: os.Stdout,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error cloning git repo: " + err.Error())
+		return 1
 	}
 	hash := plumbing.NewHash(contractHash)
 	workTree, _ := contract.Worktree()
-	_ = workTree.Checkout(&git.CheckoutOptions{
+	err = workTree.Checkout(&git.CheckoutOptions{
 		Hash: hash,
 	})
+	if err != nil {
+		log.Println("Error check out commit: " + err.Error())
+		return 2
+	}
+	return 0
 }
