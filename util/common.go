@@ -27,7 +27,6 @@ import (
 	"github.com/docker/docker/client"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 )
 
 func RemoveTempDir(dir string) error {
@@ -199,7 +198,7 @@ func CompileSourceCode(compilerImage string, contractDir string, contractCache s
 }
 
 func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHash string) int {
-	contract, err := git.PlainClone(contractDir, false, &git.CloneOptions{
+	_, err := git.PlainClone(contractDir, false, &git.CloneOptions{
 		URL:      contractUrl,
 		Progress: os.Stdout,
 	})
@@ -207,14 +206,22 @@ func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHa
 		log.Println("Error cloning git repo: " + err.Error())
 		return 1
 	}
-	hash := plumbing.NewHash(contractHash)
-	workTree, _ := contract.Worktree()
-	err = workTree.Checkout(&git.CheckoutOptions{
-		Hash: hash,
-	})
+
+	// workTree, _ := contract.Worktree()
+
+	// err = workTree.Checkout(&git.CheckoutOptions{
+	// 	Hash: plumbing.NewHash(contractHash),
+	// })
+	// if err != nil {
+	// 	log.Println("Error check out commit: " + err.Error())
+	// 	return 2
+	// }
+	out, err := exec.Command("sh", "-c", "cd "+contractDir+" && git checkout "+contractHash).CombinedOutput()
 	if err != nil {
-		log.Println("Error check out commit: " + err.Error())
+		log.Println("Error checkout commit: " + string(out))
 		return 2
 	}
+	log.Println("Result checkout commit: " + string(out))
+
 	return 0
 }
