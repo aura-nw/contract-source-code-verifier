@@ -113,6 +113,7 @@ func UploadContractToS3(g *gin.Context, contract model.SmartContract, ctx contex
 }
 
 func CompileSourceCode(compilerImage string, contractDir string, contractCache string) bool {
+	checkError := false
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -158,7 +159,7 @@ func CompileSourceCode(compilerImage string, contractDir string, contractCache s
 
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		log.Println("Error start container: " + err.Error())
-		return false
+		checkError = true
 	}
 
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNextExit)
@@ -166,15 +167,19 @@ func CompileSourceCode(compilerImage string, contractDir string, contractCache s
 	case err := <-errCh:
 		if err != nil {
 			log.Println("Error wait for container to finish running: " + err.Error())
-			return false
+			checkError = true
 		}
-	case <-statusCh:
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			log.Println("Container finished with status: ", status)
+			checkError = true
+		}
 	}
 
 	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
 	if err != nil {
 		log.Println("Error get container logs: " + err.Error())
-		return false
+		checkError = true
 	}
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(out)
@@ -183,6 +188,10 @@ func CompileSourceCode(compilerImage string, contractDir string, contractCache s
 
 	if err := cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}); err != nil {
 		log.Println("Error remove container: " + err.Error())
+		return false
+	}
+
+	if checkError {
 		return false
 	}
 
