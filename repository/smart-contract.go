@@ -196,7 +196,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	} else {
 		contractDir = ""
 	}
-	verify, dir, returnedContractDir, contractFolder := service.VerifyContractCode(request, contractHash, contractDir, strconv.Itoa(contract.CodeId))
+	verify, dir, contractFolder := service.VerifyContractCode(request, contractHash, contractDir, strconv.Itoa(contract.CodeId))
 
 	switch verify {
 	case model.SOURCE_CODE_INCORRECT:
@@ -254,7 +254,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		schemaDir := dir + "/" + contractFolder
 		if match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion); match {
-			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + returnedContractDir
+			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + contractDir
 		}
 		schemaDir = schemaDir + config.SCHEMA_DIR
 		files, err := ioutil.ReadDir(schemaDir)
