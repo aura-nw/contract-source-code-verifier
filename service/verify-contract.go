@@ -97,9 +97,13 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 	// Generate schema file
 	out, err = exec.Command("sh", "-c", "cd "+dir+"/"+contractFolder+"/"+contractDir+" && cargo clean && cargo schema").CombinedOutput()
 	if err != nil {
-		_ = util.RemoveTempDir(dir)
-		log.Println("Error generate schema files: " + string(out))
-		return model.CANT_GENERATE_SCHEMA, dir, contractFolder
+		contractDir = strings.ReplaceAll(contractDir, "-", "_")
+		out, err = exec.Command("sh", "-c", "cd "+dir+"/"+contractFolder+"/"+contractDir+" && cargo clean && cargo schema").CombinedOutput()
+		if err != nil {
+			_ = util.RemoveTempDir(dir)
+			log.Println("Error generate schema files: " + string(out))
+			return model.CANT_GENERATE_SCHEMA, dir, contractFolder
+		}
 	}
 	log.Println("Result generate schema files: " + string(out))
 
