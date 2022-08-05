@@ -196,7 +196,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 	} else {
 		contractDir = ""
 	}
-	verify, dir, contractFolder := service.VerifyContractCode(request, contractHash, contractDir, strconv.Itoa(contract.CodeId))
+	verify, dir, contractDir, contractFolder := service.VerifyContractCode(request, contractHash, contractDir, strconv.Itoa(contract.CodeId))
 
 	switch verify {
 	case model.SOURCE_CODE_INCORRECT:
