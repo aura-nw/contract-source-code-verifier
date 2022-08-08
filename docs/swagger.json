@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "host": "verify.euphoria.aurascan.io",
+    "host": "verify-job.dev.aura.network",
     "basePath": "/",
     "paths": {
         "/smart-contract/get-hash/{contractId}": {
