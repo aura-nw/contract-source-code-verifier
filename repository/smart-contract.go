@@ -190,8 +190,9 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 	log.Println("Start verifying smart contract source code")
 	var contractDir string
+	var exactContractFolder string
 	if match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion); match {
-		exactContractFolder := strings.ReplaceAll(strings.Split(request.WasmFile, ".")[0], "_", "-")
+		exactContractFolder = strings.ReplaceAll(strings.Split(request.WasmFile, ".")[0], "_", "-")
 		contractDir = config.WORKSPACE_DIR + exactContractFolder
 	} else {
 		contractDir = ""
@@ -254,7 +255,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		schemaDir := dir + "/" + contractFolder
 		if match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion); match {
-			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + contractDir
+			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + exactContractFolder
 		}
 		schemaDir = schemaDir + config.SCHEMA_DIR
 		files, err := ioutil.ReadDir(schemaDir)
