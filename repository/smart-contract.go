@@ -255,7 +255,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		schemaDir := dir + "/" + contractFolder
 		if match, _ := regexp.MatchString(config.WORKSPACE_REGEX, request.CompilerVersion); match {
-			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + exactContractFolder
+			schemaDir = schemaDir + "/" + config.WORKSPACE_DIR + strings.Split(contractDir, "/")[1]
 		}
 		schemaDir = schemaDir + config.SCHEMA_DIR
 		files, err := ioutil.ReadDir(schemaDir)
