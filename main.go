@@ -18,7 +18,7 @@ import (
 // @contact.email soberkoder@gmail.com
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host verify-job.dev.aura.network
+// @host verify.euphoria.aurascan.io
 // @BasePath /
 func main() {
 	smartContractRepo := repository.New()
@@ -41,7 +41,7 @@ func main() {
 		}
 	}
 
-	url := ginSwagger.URL("https://verify-job.dev.aura.network/swagger/doc.json") // The url pointing to API definition
+	url := ginSwagger.URL("https://verify.euphoria.aurascan.io/swagger/doc.json") // The url pointing to API definition
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler, url))
 	router.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

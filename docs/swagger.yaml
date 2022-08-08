@@ -20,7 +20,7 @@ definitions:
       wasmFile:
         type: string
     type: object
-host: verify-job.dev.aura.network
+host: verify.euphoria.aurascan.io
 info:
   contact:
     email: soberkoder@gmail.com
