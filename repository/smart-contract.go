@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	InstantiateMsg string = "instantiate_msg.json"
-	QueryMsg              = "query_msg.json"
-	ExecuteMsg            = "execute_msg.json"
-	CW20ExecuteMsg        = "cw20_execute_msg.json"
+	InstantiateMsg   string = "instantiate_msg.json"
+	QueryMsg                = "query_msg.json"
+	QueryMsgForEmpty        = "query_msg_for__empty.json"
+	ExecuteMsg              = "execute_msg.json"
+	CW20ExecuteMsg          = "cw20_execute_msg.json"
 )
 
 type SmartContractRepo struct {
@@ -298,7 +299,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			switch file.Name() {
 			case InstantiateMsg:
 				instantiateSchema = string(data)
-			case QueryMsg:
+			case QueryMsg, QueryMsgForEmpty:
 				querySchema = string(data)
 			case ExecuteMsg, CW20ExecuteMsg:
 				executeSchema = string(data)
