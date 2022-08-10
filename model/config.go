@@ -29,4 +29,7 @@ type Config struct {
 	WORKSPACE_REGEX string `mapstructure:"WORKSPACE_REGEX"`
 
 	ZIP_PREFIX string `mapstructure:"ZIP_PREFIX"`
+
+	RUST_OPTIMIZER      string `mapstructure:"RUST_OPTIMIZER"`
+	WORKSPACE_OPTIMIZER string `mapstructure:"WORKSPACE_OPTIMIZER"`
 }
