@@ -239,7 +239,7 @@ func DownloadAllCompilerImages() {
 	if err != nil {
 		log.Println("Error pull all rust-optimizer images: " + err.Error())
 	}
-	_, err = cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{})
+	_, err = cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{All: true})
 	if err != nil {
 		log.Println("Error pull all workspace-optimizer images: " + err.Error())
 	}
