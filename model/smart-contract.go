@@ -24,6 +24,7 @@ type SmartContract struct {
 	ContractVerification string
 	CompilerVersion      string
 	S3Location           string
+	ContractReferences   string
 }
 
 // Find a smart contract
