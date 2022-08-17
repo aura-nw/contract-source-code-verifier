@@ -345,6 +345,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				unverifiedContract[i].S3Location = contract.S3Location
 			}
 
+			log.Println("Similar contract updated after verifying: ", unverifiedContract)
 			g.BindJSON(&unverifiedContract)
 
 			if err = model.UpdateSmartContract(repository.Db, &unverifiedContract); err != nil {
