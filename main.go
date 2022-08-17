@@ -22,8 +22,7 @@ import (
 // @host verify.serenity.aurascan.io
 // @BasePath /
 func main() {
-	util.DownloadAllRustOptimizerImages()
-	util.DownloadAllWorkspaceOptimizerImages()
+	util.DownloadAllCompilerImages()
 
 	smartContractRepo := repository.New()
 	router := gin.Default()
