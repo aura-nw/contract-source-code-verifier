@@ -226,7 +226,7 @@ func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHa
 	return 0
 }
 
-func DownloadAllCompilerImages() {
+func DownloadAllRustOptimizerImages() {
 	// Load config
 	config, _ := LoadConfig(".")
 
@@ -239,7 +239,21 @@ func DownloadAllCompilerImages() {
 	if err != nil {
 		log.Println("Error pull all rust-optimizer images: " + err.Error())
 	}
-	_, err = cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{All: true})
+
+	defer reader.Close()
+	io.Copy(os.Stdout, reader)
+}
+
+func DownloadAllWorkspaceOptimizerImages() {
+	// Load config
+	config, _ := LoadConfig(".")
+
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Println("Error create docker client: " + err.Error())
+	}
+	reader, err := cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{All: true})
 	if err != nil {
 		log.Println("Error pull all workspace-optimizer images: " + err.Error())
 	}

@@ -22,7 +22,8 @@ import (
 // @host verify-job.dev.aura.network
 // @BasePath /
 func main() {
-	util.DownloadAllCompilerImages()
+	util.DownloadAllRustOptimizerImages()
+	util.DownloadAllWorkspaceOptimizerImages()
 
 	smartContractRepo := repository.New()
 	router := gin.Default()
