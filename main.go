@@ -22,7 +22,8 @@ import (
 // @host verify.euphoria.aurascan.io
 // @BasePath /
 func main() {
-	util.DownloadAllCompilerImages()
+	util.DownloadAllRustOptimizerImages()
+	util.DownloadAllWorkspaceOptimizerImages()
 
 	smartContractRepo := repository.New()
 	router := gin.Default()

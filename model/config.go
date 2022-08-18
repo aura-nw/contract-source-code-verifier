@@ -32,4 +32,7 @@ type Config struct {
 
 	RUST_OPTIMIZER      string `mapstructure:"RUST_OPTIMIZER"`
 	WORKSPACE_OPTIMIZER string `mapstructure:"WORKSPACE_OPTIMIZER"`
+
+	DOCKER_USERNAME string `mapstructure:"DOCKER_USERNAME"`
+	DOCKER_PASSWORD string `mapstructure:"DOCKER_PASSWORD"`
 }
