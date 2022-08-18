@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -226,7 +227,7 @@ func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHa
 	return 0
 }
 
-func DownloadAllCompilerImages() {
+func DownloadAllRustOptimizerImages() {
 	// Load config
 	config, _ := LoadConfig(".")
 
@@ -235,11 +236,47 @@ func DownloadAllCompilerImages() {
 	if err != nil {
 		log.Println("Error create docker client: " + err.Error())
 	}
-	reader, err := cli.ImagePull(ctx, config.RUST_OPTIMIZER, types.ImagePullOptions{All: true})
+
+	authConfig := types.AuthConfig{
+		Username: config.DOCKER_USERNAME,
+		Password: config.DOCKER_PASSWORD,
+	}
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		log.Println("Error encoding docker auth config: " + err.Error())
+	}
+	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+
+	reader, err := cli.ImagePull(ctx, config.RUST_OPTIMIZER, types.ImagePullOptions{All: true, RegistryAuth: authStr})
 	if err != nil {
 		log.Println("Error pull all rust-optimizer images: " + err.Error())
 	}
-	_, err = cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{All: true})
+
+	defer reader.Close()
+	io.Copy(os.Stdout, reader)
+}
+
+func DownloadAllWorkspaceOptimizerImages() {
+	// Load config
+	config, _ := LoadConfig(".")
+
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Println("Error create docker client: " + err.Error())
+	}
+
+	authConfig := types.AuthConfig{
+		Username: config.DOCKER_USERNAME,
+		Password: config.DOCKER_PASSWORD,
+	}
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		log.Println("Error encoding docker auth config: " + err.Error())
+	}
+	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+
+	reader, err := cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{All: true, RegistryAuth: authStr})
 	if err != nil {
 		log.Println("Error pull all workspace-optimizer images: " + err.Error())
 	}
@@ -247,21 +284,3 @@ func DownloadAllCompilerImages() {
 	defer reader.Close()
 	io.Copy(os.Stdout, reader)
 }
-
-// func DownloadAllWorkspaceOptimizerImages() {
-// 	// Load config
-// 	config, _ := LoadConfig(".")
-
-// 	ctx := context.Background()
-// 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-// 	if err != nil {
-// 		log.Println("Error create docker client: " + err.Error())
-// 	}
-// 	reader, err := cli.ImagePull(ctx, config.WORKSPACE_OPTIMIZER, types.ImagePullOptions{All: true})
-// 	if err != nil {
-// 		log.Println("Error pull all workspace-optimizer images: " + err.Error())
-// 	}
-
-// 	defer reader.Close()
-// 	io.Copy(os.Stdout, reader)
-// }
