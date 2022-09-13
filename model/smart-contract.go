@@ -24,8 +24,9 @@ type SmartContract struct {
 	ContractVerification string
 	CompilerVersion      string
 	S3Location           string
-	MainnetCodeId        string
+	ReferenceCodeId      string
 	MainnetUploadStatus  string
+	VerifiedAt           time.Time
 }
 
 // Find a smart contract

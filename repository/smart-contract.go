@@ -14,6 +14,7 @@ import (
 	"smart-contract-verify/util"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -322,6 +323,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contract.QueryMsgSchema = querySchema
 		contract.ExecuteMsgSchema = executeSchema
 		contract.S3Location = s3Location
+		contract.VerifiedAt = time.Now()
 
 		log.Println("Contract updated after verifying: ", contract)
 		g.BindJSON(&contract)
@@ -343,6 +345,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				unverifiedContract[i].QueryMsgSchema = contract.QueryMsgSchema
 				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
 				unverifiedContract[i].S3Location = contract.S3Location
+				unverifiedContract[i].VerifiedAt = time.Now()
 			}
 
 			log.Println("Similar contract updated after verifying: ", unverifiedContract)
