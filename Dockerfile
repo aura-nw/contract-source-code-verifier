@@ -15,10 +15,10 @@ RUN echo \
 RUN apt-get update
 RUN apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
 
-RUN wget -P /tmp https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz
+RUN wget -P /tmp https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz
 
-RUN tar -C /usr/local -xzf /tmp/go1.17.5.linux-amd64.tar.gz
-RUN rm /tmp/go1.17.5.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf /tmp/go1.19.1.linux-amd64.tar.gz
+RUN rm /tmp/go1.19.1.linux-amd64.tar.gz
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
