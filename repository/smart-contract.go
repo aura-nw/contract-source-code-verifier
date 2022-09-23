@@ -324,6 +324,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 		contract.ExecuteMsgSchema = executeSchema
 		contract.S3Location = s3Location
 		contract.VerifiedAt = time.Now()
+		contract.MainnetUploadStatus = model.STATUS_NOT_REGISTERED
 
 		log.Println("Contract updated after verifying: ", contract)
 		g.BindJSON(&contract)
@@ -346,6 +347,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
 				unverifiedContract[i].S3Location = contract.S3Location
 				unverifiedContract[i].VerifiedAt = time.Now()
+				unverifiedContract[i].MainnetUploadStatus = model.STATUS_NOT_REGISTERED
 			}
 
 			log.Println("Similar contract updated after verifying: ", unverifiedContract)
