@@ -43,3 +43,11 @@ const (
 	SIMILAR_MATCH        = "SIMILAR MATCH"
 	UNVERIFIED           = "UNVERIFIED"
 )
+
+const (
+	STATUS_UNVERIFIED     string = "Unverified"
+	STATUS_NOT_REGISTERED        = "Not registered"
+	STATUS_TBD                   = "TBD"
+	STATUS_DEPLOYED              = "Deployed"
+	STATUS_REJECTED              = "Rejected"
+)
