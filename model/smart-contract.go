@@ -24,7 +24,7 @@ type SmartContract struct {
 	ContractVerification string
 	CompilerVersion      string
 	S3Location           string
-	ReferenceCodeId      string
+	ReferenceCodeId      int
 	MainnetUploadStatus  string
 	VerifiedAt           time.Time
 }
