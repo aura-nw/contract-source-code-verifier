@@ -52,7 +52,7 @@ func GetSmartContractByHash(db *gorm.DB, SmartContract interface{}, hash string,
 
 // Find smart contracts by hash
 func GetSmartContractsByHash(db *gorm.DB, SmartContracts interface{}, hash string, verification string) (err error) {
-	err = db.Find(&SmartContracts).Where("contract_hash = ?", hash).Where("contract_verification = ?", verification).Error
+	err = db.Where("contract_hash = ?", hash).Where("contract_verification = ?", verification).Find(&SmartContracts).Error
 	if err != nil {
 		return err
 	}
