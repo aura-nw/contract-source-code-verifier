@@ -124,6 +124,8 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 			contract.ExecuteMsgSchema = exactContract.ExecuteMsgSchema
 			contract.CompilerVersion = exactContract.CompilerVersion
 			contract.S3Location = exactContract.S3Location
+			contract.VerifiedAt = time.Now()
+			contract.MainnetUploadStatus = exactContract.MainnetUploadStatus
 
 			log.Println("Contract updated as similar: ", contract)
 			g.BindJSON(&contract)
@@ -336,7 +338,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		if contract.ContractVerification == model.EXACT_MATCH {
 			var unverifiedContract []model.SmartContract
-			err = model.GetSmartContractByHash(repository.Db, &unverifiedContract, contract.ContractHash, model.UNVERIFIED)
+			err = model.GetSmartContractsByHash(repository.Db, &unverifiedContract, contract.ContractHash, model.UNVERIFIED)
 			for i := 0; i < len(unverifiedContract); i++ {
 				unverifiedContract[i].ContractMatch = contract.ContractAddress
 				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
