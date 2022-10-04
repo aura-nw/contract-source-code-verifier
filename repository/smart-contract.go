@@ -91,7 +91,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	// Set key for a code id to specify as being verified
 	_ = redisClient.Set(ctx, config.ZIP_PREFIX+strconv.Itoa(contract.CodeId), "Verifying", 0).Err()
 
-	var contractHash string
+	var contractHash, dir string
 	if contract.ContractHash != "" {
 		contractHash = contract.ContractHash
 	} else {
@@ -112,43 +112,48 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 		log.Println("Result get contract hash: ", hash)
 		contractHash = hash
 		_ = util.RemoveTempDir(dir)
-
-		var exactContract model.SmartContract
-		if err := model.GetSmartContractByHash(repository.Db, &exactContract, contractHash, model.EXACT_MATCH); err == nil {
-			contract.ContractVerification = model.SIMILAR_MATCH
-			contract.ContractMatch = exactContract.ContractAddress
-			contract.ContractHash = exactContract.ContractHash
-			contract.Url = exactContract.Url
-			contract.InstantiateMsgSchema = exactContract.InstantiateMsgSchema
-			contract.QueryMsgSchema = exactContract.QueryMsgSchema
-			contract.ExecuteMsgSchema = exactContract.ExecuteMsgSchema
-			contract.CompilerVersion = exactContract.CompilerVersion
-			contract.S3Location = exactContract.S3Location
-			contract.VerifiedAt = time.Now()
-			contract.MainnetUploadStatus = exactContract.MainnetUploadStatus
-
-			log.Println("Contract updated as similar: ", contract)
-			g.BindJSON(&contract)
-			if err = model.UpdateSmartContract(repository.Db, &contract); err != nil {
-				_ = util.RemoveTempDir(dir)
-				log.Println("Error update smart contract: " + err.Error())
-				return
-			}
-			util.PublishRedisMessage(
-				ctx,
-				redisClient,
-				request.ContractAddress,
-				config.REDIS_CHANNEL,
-				dir,
-				true,
-				model.SIMILAR_CONTRACT_DETECTED,
-				model.ResponseMessage[model.SIMILAR_CONTRACT_DETECTED]+contract.ContractMatch)
-			return
-		}
-		log.Println("Result get exact contract by hash: ", exactContract)
 	}
 
-	response = util.CustomResponse(model.SUCCESSFUL, "")
+	var exactContract model.SmartContract
+	if err := model.GetSmartContractByHash(repository.Db, &exactContract, contractHash, model.EXACT_MATCH); err == nil {
+		log.Println("Result get exact contract by hash: ", exactContract)
+		contract.ContractVerification = model.SIMILAR_MATCH
+		contract.ContractMatch = exactContract.ContractAddress
+		contract.ContractHash = exactContract.ContractHash
+		contract.Url = exactContract.Url
+		contract.InstantiateMsgSchema = exactContract.InstantiateMsgSchema
+		contract.QueryMsgSchema = exactContract.QueryMsgSchema
+		contract.ExecuteMsgSchema = exactContract.ExecuteMsgSchema
+		contract.CompilerVersion = exactContract.CompilerVersion
+		contract.S3Location = exactContract.S3Location
+		contract.VerifiedAt = time.Now()
+		if contract.CodeId == exactContract.CodeId {
+			contract.MainnetUploadStatus = exactContract.MainnetUploadStatus
+		} else {
+			contract.MainnetUploadStatus = model.STATUS_NOT_REGISTERED
+		}
+
+		log.Println("Contract updated as similar: ", contract)
+		g.BindJSON(&contract)
+		if err = model.UpdateSmartContract(repository.Db, &contract); err != nil {
+			_ = util.RemoveTempDir(dir)
+			log.Println("Error update smart contract: " + err.Error())
+			return
+		}
+		util.PublishRedisMessage(
+			ctx,
+			redisClient,
+			request.ContractAddress,
+			config.REDIS_CHANNEL,
+			dir,
+			true,
+			model.SIMILAR_CONTRACT_DETECTED,
+			model.ResponseMessage[model.SIMILAR_CONTRACT_DETECTED]+contract.ContractMatch)
+		response = util.CustomResponse(model.SIMILAR_CONTRACT_DETECTED, model.ResponseMessage[model.SIMILAR_CONTRACT_DETECTED]+contract.ContractMatch)
+		return
+	} else {
+		response = util.CustomResponse(model.SUCCESSFUL, "")
+	}
 	redisClient.Close()
 
 	g.JSON(http.StatusOK, response)
@@ -349,7 +354,11 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
 				unverifiedContract[i].S3Location = contract.S3Location
 				unverifiedContract[i].VerifiedAt = time.Now()
-				unverifiedContract[i].MainnetUploadStatus = model.STATUS_NOT_REGISTERED
+				if contract.CodeId == contract.CodeId {
+					unverifiedContract[i].MainnetUploadStatus = contract.MainnetUploadStatus
+				} else {
+					unverifiedContract[i].MainnetUploadStatus = model.STATUS_NOT_REGISTERED
+				}
 			}
 
 			log.Println("Similar contract updated after verifying: ", unverifiedContract)
