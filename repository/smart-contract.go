@@ -132,21 +132,7 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 			contract.ReferenceCodeId = sameContracts[0].ReferenceCodeId
 			contract.MainnetUploadStatus = sameContracts[0].MainnetUploadStatus
 			contract.ProjectName = sameContracts[0].ProjectName
-			contract.ProjectDescription = sameContracts[0].ProjectDescription
-			contract.OfficialProjectWebsite = sameContracts[0].OfficialProjectWebsite
-			contract.OfficialProjectEmail = sameContracts[0].OfficialProjectEmail
-			contract.Whitepaper = sameContracts[0].Whitepaper
-			contract.Github = sameContracts[0].Github
-			contract.Telegram = sameContracts[0].Telegram
-			contract.Wechat = sameContracts[0].Wechat
-			contract.LinkedIn = sameContracts[0].LinkedIn
-			contract.Discord = sameContracts[0].Discord
-			contract.Medium = sameContracts[0].Medium
-			contract.Reddit = sameContracts[0].Reddit
-			contract.Slack = sameContracts[0].Slack
-			contract.Facebook = sameContracts[0].Facebook
-			contract.Twitter = sameContracts[0].Twitter
-			contract.Bitcointalk = sameContracts[0].Bitcointalk
+			contract.RequestId = sameContracts[0].RequestId
 		} else {
 			contract.ReferenceCodeId = 0
 			contract.MainnetUploadStatus = model.STATUS_NOT_REGISTERED
