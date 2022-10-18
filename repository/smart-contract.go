@@ -359,7 +359,7 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
 				unverifiedContract[i].S3Location = contract.S3Location
 				unverifiedContract[i].VerifiedAt = time.Now()
-				if contract.CodeId == contract.CodeId {
+				if unverifiedContract[i].CodeId == contract.CodeId {
 					unverifiedContract[i].MainnetUploadStatus = contract.MainnetUploadStatus
 				} else {
 					unverifiedContract[i].MainnetUploadStatus = model.STATUS_NOT_REGISTERED
