@@ -259,6 +259,17 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 			false,
 			model.WRONG_COMMIT,
 			model.ResponseMessage[model.WRONG_COMMIT])
+	case model.MISSING_CARGO_LOCK:
+		log.Println("Verify smart contract failed")
+		util.PublishRedisMessage(
+			ctx,
+			redisClient,
+			request.ContractAddress,
+			config.REDIS_CHANNEL,
+			dir,
+			false,
+			model.MISSING_CARGO_LOCK,
+			model.ResponseMessage[model.MISSING_CARGO_LOCK])
 	case model.SUCCESSFUL:
 		log.Println("Verify smart contract successful")
 

@@ -71,6 +71,8 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 		return model.GITHUB_404, dir, contractDir, contractFolder
 	case 2:
 		return model.WRONG_COMMIT, dir, contractDir, contractFolder
+	case 3:
+		return model.MISSING_CARGO_LOCK, dir, contractDir, contractFolder
 	}
 
 	// Compile contract
