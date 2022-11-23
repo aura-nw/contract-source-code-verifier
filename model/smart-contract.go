@@ -16,6 +16,7 @@ type SmartContract struct {
 	ContractAddress      string    `json:"contract_address"`
 	CreatorAddress       string    `json:"creator_address"`
 	ContractHash         string    `json:"contract_hash"`
+	TxHash               string    `json:"tx_hash"`
 	Url                  string    `json:"url"`
 	InstantiateMsgSchema string    `json:"instantiate_msg_schema"`
 	QueryMsgSchema       string    `json:"query_msg_schema"`
