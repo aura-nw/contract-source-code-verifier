@@ -359,16 +359,16 @@ func InstantResponse(repository *SmartContractRepo, g *gin.Context, request mode
 
 		if contract.ContractVerification == model.EXACT_MATCH {
 			var unverifiedContract []model.SmartContract
-			err = model.GetSmartContractsByHash(repository.Db, &unverifiedContract, contract.ContractHash, model.UNVERIFIED)
+			err = model.GetSmartContractsByHash(repository.Db, &unverifiedContract, contractHash, model.UNVERIFIED)
 			for i := 0; i < len(unverifiedContract); i++ {
 				unverifiedContract[i].ContractMatch = contract.ContractAddress
 				unverifiedContract[i].ContractVerification = model.SIMILAR_MATCH
 				unverifiedContract[i].Url = gitUrl
 				unverifiedContract[i].CompilerVersion = request.CompilerVersion
-				unverifiedContract[i].InstantiateMsgSchema = contract.InstantiateMsgSchema
-				unverifiedContract[i].QueryMsgSchema = contract.QueryMsgSchema
-				unverifiedContract[i].ExecuteMsgSchema = contract.ExecuteMsgSchema
-				unverifiedContract[i].S3Location = contract.S3Location
+				unverifiedContract[i].InstantiateMsgSchema = instantiateSchema
+				unverifiedContract[i].QueryMsgSchema = querySchema
+				unverifiedContract[i].ExecuteMsgSchema = executeSchema
+				unverifiedContract[i].S3Location = s3Location
 				unverifiedContract[i].VerifiedAt = time.Now()
 				if unverifiedContract[i].CodeId == contract.CodeId {
 					unverifiedContract[i].MainnetUploadStatus = contract.MainnetUploadStatus
