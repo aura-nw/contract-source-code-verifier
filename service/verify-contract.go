@@ -46,7 +46,7 @@ func GetContractHash(contractId string, rpc string) (string, string) {
 		log.Println("Error get contract hash: " + string(out))
 		return "", ""
 	}
-	log.Println("Result GetContractHash: " + string(out))
+	log.Println("Result in function GetContractHash: " + string(out))
 
 	hash := strings.Split(string(out), " ")[0]
 	return hash, dir
@@ -88,7 +88,8 @@ func VerifyContractCode(request model.VerifyContractRequest, contractHash string
 		log.Println("Error get contract hash: " + string(codeHash))
 		return model.WASM_FILE_INCORRECT, dir, contractDir, contractFolder
 	}
-	log.Println("Result GetContractHash: " + string(codeHash))
+	log.Println("Result hash of compiled wasm file: " + string(codeHash))
+	log.Println("Result hash of network wasm file: " + string(contractHash))
 
 	// Check if hashes are match
 	if strings.Split(string(codeHash), " ")[0] != contractHash {
