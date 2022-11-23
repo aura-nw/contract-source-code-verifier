@@ -23,6 +23,7 @@ const (
 	VERIFY_DUPLICATE_CODE            = "E007"
 	GITHUB_404                       = "E008"
 	WRONG_COMMIT                     = "E009"
+	MISSING_CARGO_LOCK               = "E010"
 )
 
 var ResponseMessage = map[string]string{
@@ -36,6 +37,7 @@ var ResponseMessage = map[string]string{
 	VERIFY_DUPLICATE_CODE:     "The code id of this contract is already being verified",
 	GITHUB_404:                "Contract git URL not found",
 	WRONG_COMMIT:              "Commit not found",
+	MISSING_CARGO_LOCK:        "Missing Cargo.lock file",
 }
 
 const (

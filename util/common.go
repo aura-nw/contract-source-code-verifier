@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -223,6 +224,10 @@ func CloneAndCheckOutContract(contractDir string, contractUrl string, contractHa
 		return 2
 	}
 	log.Println("Result checkout commit: " + string(out))
+
+	if _, err := os.Stat(contractDir + "/Cargo.lock"); errors.Is(err, os.ErrNotExist) {
+		return 3
+	}
 
 	return 0
 }
