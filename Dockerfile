@@ -29,6 +29,7 @@ RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH /root/.cargo/bin:$PATH
 RUN rustup target list --installed
 RUN rustup target add wasm32-unknown-unknown
+RUN cargo install cargo-generate
 
 ARG PORT=8080
 
