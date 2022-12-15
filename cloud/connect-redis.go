@@ -17,7 +17,7 @@ func ConnectRedis() (*redis.Client, context.Context) {
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     config.REDIS_HOST + ":" + config.REDIS_PORT, // We connect to host redis, thats what the hostname of the redis service is set to in the docker-compose
 		Password: "",                                          // The password IF set in the redis Config file
-		DB:       0,
+		DB:       config.REDIS_DB,
 	})
 	// Ping the Redis server and check if any errors occured
 	err := redisClient.Ping(context.Background()).Err()

@@ -40,6 +40,36 @@ func New() *SmartContractRepo {
 }
 
 // @BasePath /api/v1
+// CallGetContractHash godoc
+// @Summary Get the hash of a deployed contract
+// @Description Return the hash of a contract provided its code Id
+// @Tags smart-contract
+// @Accept  json
+// @Produce  json
+// @Param contractId path string true "Get contract hash"
+// @Success 200 {object} model.JsonResponse
+// @Router /smart-contract/get-hash/{contractId} [get]
+func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
+	response := model.JsonResponse{}
+
+	// Load config
+	config, _ := util.LoadConfig(".")
+
+	contractId := g.Param("contractId")
+
+	hash, dir := service.GetContractHash(contractId, config.RPC)
+	if hash == "" {
+		response = util.CustomResponse(model.WASM_FILE_INCORRECT, model.ResponseMessage[model.WASM_FILE_INCORRECT])
+	} else {
+		response = util.CustomResponse(model.SUCCESSFUL, hash)
+	}
+
+	_ = util.RemoveTempDir(dir)
+
+	g.JSON(http.StatusOK, response)
+}
+
+// @BasePath /api/v1
 // CallVerifyContractCode godoc
 // @Summary Verify a smart contract source code
 // @Description Compare if source code truely belongs to deployed smart contract
@@ -164,36 +194,6 @@ func (repository *SmartContractRepo) CallVerifyContractCode(g *gin.Context) {
 	g.JSON(http.StatusOK, response)
 
 	go InstantResponse(repository, g, request, contract, contractHash)
-}
-
-// @BasePath /api/v1
-// CallGetContractHash godoc
-// @Summary Get the hash of a deployed contract
-// @Description Return the hash of a contract provided its code Id
-// @Tags smart-contract
-// @Accept  json
-// @Produce  json
-// @Param contractId path string true "Get contract hash"
-// @Success 200 {object} model.JsonResponse
-// @Router /smart-contract/get-hash/{contractId} [get]
-func (repository *SmartContractRepo) CallGetContractHash(g *gin.Context) {
-	response := model.JsonResponse{}
-
-	// Load config
-	config, _ := util.LoadConfig(".")
-
-	contractId := g.Param("contractId")
-
-	hash, dir := service.GetContractHash(contractId, config.RPC)
-	if hash == "" {
-		response = util.CustomResponse(model.WASM_FILE_INCORRECT, model.ResponseMessage[model.WASM_FILE_INCORRECT])
-	} else {
-		response = util.CustomResponse(model.SUCCESSFUL, hash)
-	}
-
-	_ = util.RemoveTempDir(dir)
-
-	g.JSON(http.StatusOK, response)
 }
 
 func InstantResponse(repository *SmartContractRepo, g *gin.Context, request model.VerifyContractRequest, contract model.SmartContract, contractHash string) {

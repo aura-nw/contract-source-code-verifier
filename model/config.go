@@ -19,6 +19,7 @@ type Config struct {
 	REDIS_HOST    string `mapstructure:"REDIS_HOST"`
 	REDIS_PORT    string `mapstructure:"REDIS_PORT"`
 	REDIS_CHANNEL string `mapstructure:"REDIS_CHANNEL"`
+	REDIS_DB      int    `mapstructure:"REDIS_DB"`
 
 	AWS_REGION            string `mapstructure:"AWS_REGION"`
 	AWS_ACCESS_KEY_ID     string `mapstructure:"AWS_ACCESS_KEY_ID"`
